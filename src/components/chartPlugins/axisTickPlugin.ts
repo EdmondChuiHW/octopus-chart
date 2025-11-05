@@ -1,8 +1,8 @@
-import type { Chart, Plugin, ChartDataset } from "chart.js";
+import type { Chart, Plugin, ChartDataset } from 'chart.js';
 
-export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
-  const plugin: Plugin<"bar"> = {
-    id: "axisTickPlugin",
+export function axisTickPluginFactory(nowMs = Date.now()): Plugin<'bar'> {
+  const plugin: Plugin<'bar'> = {
+    id: 'axisTickPlugin',
     afterDraw: (chart: Chart) => {
       const xScale = chart.scales.x;
       if (!xScale) return;
@@ -11,7 +11,7 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
       ctx.save();
       const chartBottom = chart.chartArea.bottom;
 
-      type ExtDs = ChartDataset<"bar", number[]> & {
+      type ExtDs = ChartDataset<'bar', number[]> & {
         startMs: number[];
         endMs: number[];
       };
@@ -29,7 +29,7 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
         const isActive = now >= s && now < e;
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
-        ctx.strokeStyle = isActive ? "#ffd54f" : "rgba(234,246,255,0.9)";
+        ctx.strokeStyle = isActive ? '#ffd54f' : 'rgba(234,246,255,0.9)';
         ctx.lineWidth = isActive ? 2 : isMajor ? 1.25 : 1;
         ctx.moveTo(x, chartBottom + 0.5);
         ctx.lineTo(x, chartBottom + len + 0.5);

@@ -1,23 +1,23 @@
-import { useQuery, type QueryFunctionContext } from "@tanstack/react-query";
-import { isoOffsetHours } from "../lib/dateUtils";
-import { ResponseSchema } from "../lib/types";
-import type { PricePoint } from "../lib/types";
+import { useQuery, type QueryFunctionContext } from '@tanstack/react-query';
+import { isoOffsetHours } from '../lib/dateUtils';
+import { ResponseSchema } from '../lib/types';
+import type { PricePoint } from '../lib/types';
 
 export function useOctopusPrices(product: string, tariff: string) {
   return useQuery<PricePoint[], Error, PricePoint[], [string, string, string]>({
-    queryKey: ["prices", product, tariff],
+    queryKey: ['prices', product, tariff],
     queryFn: async (
-      ctx: QueryFunctionContext<[string, string, string]>
+      ctx: QueryFunctionContext<[string, string, string]>,
     ): Promise<PricePoint[]> => {
       const [, p, t] = ctx.queryKey;
       const period_from = isoOffsetHours(-12);
       const period_to = isoOffsetHours(36);
       const url = `https://api.octopus.energy/v1/products/${encodeURIComponent(
-        p
+        p,
       )}/electricity-tariffs/${encodeURIComponent(
-        t
+        t,
       )}/standard-unit-rates/?period_from=${encodeURIComponent(
-        period_from
+        period_from,
       )}&period_to=${encodeURIComponent(period_to)}&page_size=1500`;
 
       const res = await fetch(url);
@@ -29,7 +29,7 @@ export function useOctopusPrices(product: string, tariff: string) {
       const parsed = ResponseSchema.safeParse(json);
       if (!parsed.success) {
         throw new Error(
-          `API response validation failed: ${parsed.error.message}`
+          `API response validation failed: ${parsed.error.message}`,
         );
       }
 

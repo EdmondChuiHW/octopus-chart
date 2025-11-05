@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { FormEvent } from 'react';
 
 type Props = {
   product: string;
@@ -36,7 +36,7 @@ export default function Controls({
         />
       </label>
       <button type="submit" className="btn" disabled={isLoading}>
-        {isLoading ? "Loading…" : "Load rates"}
+        {isLoading ? 'Loading…' : 'Load rates'}
       </button>
     </form>
   );

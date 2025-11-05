@@ -1,4 +1,4 @@
-import type { PricePoint } from "./types";
+import type { PricePoint } from './types';
 
 export function incVatValue(p: PricePoint) {
   return p.value_inc_vat ?? Math.round(p.value_exc_vat * 1.05 * 100) / 100;

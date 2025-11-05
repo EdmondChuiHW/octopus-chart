@@ -3,7 +3,7 @@ import {
   type ChartArea,
   type ChartComponent,
   type LabelItem,
-} from "chart.js";
+} from 'chart.js';
 
 export class MyScale extends CategoryScale implements ChartComponent {
   getLabelItems(chartArea?: ChartArea): LabelItem[] {
@@ -25,4 +25,4 @@ export class MyScale extends CategoryScale implements ChartComponent {
 }
 
 // use built-in scale ID to lie to TS lol
-MyScale.id = "timeseries";
+MyScale.id = 'timeseries';

@@ -1,21 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { useOctopusPrices } from "../hooks/useOctopusPrices";
-import Controls from "./Controls";
-import PriceChart from "./PriceChart";
-import RateClock from "./RateClock";
-import { axisTickPluginFactory } from "./chartPlugins/axisTickPlugin";
-import { formatTimeLocal, getLocalDateKey } from "../lib/dateUtils";
-import { incVatValue, buildStartEndMs } from "../lib/priceUtils";
-import type { PricePoint } from "../lib/types";
+import { useEffect, useMemo, useState } from 'react';
+import { useOctopusPrices } from '../hooks/useOctopusPrices';
+import Controls from './Controls';
+import PriceChart from './PriceChart';
+import RateClock from './RateClock';
+import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
+import { formatTimeLocal, getLocalDateKey } from '../lib/dateUtils';
+import { incVatValue, buildStartEndMs } from '../lib/priceUtils';
+import type { PricePoint } from '../lib/types';
 import type {
   ChartOptions,
   ChartData,
   ChartDataset,
   TooltipItem,
-} from "chart.js";
+} from 'chart.js';
 
-const DEFAULT_PRODUCT = "AGILE-24-10-01";
-const DEFAULT_TARIFF = "E-1R-AGILE-24-10-01-C";
+const DEFAULT_PRODUCT = 'AGILE-24-10-01';
+const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
 
 export default function OctopusChart() {
   const [product, setProduct] = useState(DEFAULT_PRODUCT);
@@ -36,35 +36,36 @@ export default function OctopusChart() {
   const labels = useMemo(
     () =>
       points.map(
-        (p) => `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(p.valid_to)}`
+        (p) =>
+          `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(p.valid_to)}`,
       ),
-    [points]
+    [points],
   );
   const dataValues = useMemo(() => points.map((p) => incVatValue(p)), [points]);
   const backgroundColors = useMemo(
     () =>
       dataValues.map((_, i) => {
         const p = points[i];
-        if (!p) return "rgba(0,120,212,0.6)";
+        if (!p) return 'rgba(0,120,212,0.6)';
         const start = p.valid_from.getTime();
         const end = p.valid_to.getTime();
-        if (nowMs >= start && nowMs < end) return "rgba(255,205,86,0.95)";
-        if (nowMs >= end) return "rgba(0,120,212,0.28)";
-        return "rgba(0,120,212,0.95)";
+        if (nowMs >= start && nowMs < end) return 'rgba(255,205,86,0.95)';
+        if (nowMs >= end) return 'rgba(0,120,212,0.28)';
+        return 'rgba(0,120,212,0.95)';
       }),
-    [dataValues, points, nowMs]
+    [dataValues, points, nowMs],
   );
 
   const { startMs, endMs } = buildStartEndMs(points);
 
-  type ExtDataset = ChartDataset<"bar", number[]> & {
+  type ExtDataset = ChartDataset<'bar', number[]> & {
     startMs: number[];
     endMs: number[];
   };
 
-  const data = useMemo((): ChartData<"bar", number[], string> => {
+  const data = useMemo((): ChartData<'bar', number[], string> => {
     const dataset: ExtDataset = {
-      label: "p/kWh (inc VAT)",
+      label: 'p/kWh (inc VAT)',
       data: dataValues,
       backgroundColor: backgroundColors,
       borderColor: backgroundColors,
@@ -75,12 +76,12 @@ export default function OctopusChart() {
     return { labels, datasets: [dataset] };
   }, [labels, dataValues, backgroundColors, startMs, endMs]);
 
-  const todayKey = new Date(nowMs).toLocaleDateString("en-GB", {
-    timeZone: "Europe/London",
+  const todayKey = new Date(nowMs).toLocaleDateString('en-GB', {
+    timeZone: 'Europe/London',
   });
   const tomorrowKey = new Date(nowMs + 24 * 3600 * 1000).toLocaleDateString(
-    "en-GB",
-    { timeZone: "Europe/London" }
+    'en-GB',
+    { timeZone: 'Europe/London' },
   );
 
   const dayMap = useMemo(() => {
@@ -106,20 +107,20 @@ export default function OctopusChart() {
     y?: number;
   } | null>(null);
 
-  const options: ChartOptions<"bar"> = useMemo(
+  const options: ChartOptions<'bar'> = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
           enabled: true,
           callbacks: {
-            title: (items: TooltipItem<"bar">[]) => items[0]?.label ?? "",
-            label: (ctx: TooltipItem<"bar">) => {
+            title: (items: TooltipItem<'bar'>[]) => items[0]?.label ?? '',
+            label: (ctx: TooltipItem<'bar'>) => {
               const v = ctx.parsed.y;
-              return v == null ? "No data" : `${v} p/kWh (inc VAT)`;
+              return v == null ? 'No data' : `${v} p/kWh (inc VAT)`;
             },
           },
           bodyFont: { size: 16 },
@@ -130,7 +131,7 @@ export default function OctopusChart() {
       scales: {
         x: {
           // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
-          type: "timeseries",
+          type: 'timeseries',
           ticks: {
             major: {
               enabled: true,
@@ -141,7 +142,7 @@ export default function OctopusChart() {
               const end = endMs[idx];
               const isActive = nowMs >= start && nowMs < end;
               ctx.tick.major = isActive;
-              return isActive ? "#ffd54f" : undefined;
+              return isActive ? '#ffd54f' : undefined;
             },
             showLabelBackdrop: (ctx) => {
               const idx = Number(ctx.index);
@@ -154,7 +155,7 @@ export default function OctopusChart() {
               const start = startMs[idx];
               const end = endMs[idx];
               const isActive = nowMs >= start && nowMs < end;
-              return isActive ? "#000000" : "#ffffff";
+              return isActive ? '#000000' : '#ffffff';
             },
             backdropPadding: 4,
             font: {
@@ -174,27 +175,27 @@ export default function OctopusChart() {
               },
             },
             autoSkip: false,
-            align: "center",
+            align: 'center',
             callback: (_value, idx) => {
               const p = points[idx];
-              if (!p) return "";
+              if (!p) return '';
               const startDate = p.valid_from;
-              const parts = startDate.toLocaleString("en-GB", {
-                timeZone: "Europe/London",
-                hour: "2-digit",
-                minute: "2-digit",
+              const parts = startDate.toLocaleString('en-GB', {
+                timeZone: 'Europe/London',
+                hour: '2-digit',
+                minute: '2-digit',
                 hour12: false,
               });
-              const [hStr, mStr] = parts.split(":");
+              const [hStr, mStr] = parts.split(':');
               const hour24 = Number(hStr);
               const minute = Number(mStr);
               const start = startDate.getTime();
               const end = p.valid_to.getTime();
-              if (minute !== 0 && !(nowMs >= start && nowMs < end)) return "";
+              if (minute !== 0 && !(nowMs >= start && nowMs < end)) return '';
               const hour12 = ((hour24 + 11) % 12) + 1;
-              const ampm = hour24 >= 12 ? "pm" : "am";
+              const ampm = hour24 >= 12 ? 'pm' : 'am';
               if (minute !== 0 && nowMs >= start && nowMs < end) {
-                const minuteStr = mStr.padStart(2, "0");
+                const minuteStr = mStr.padStart(2, '0');
                 return `${hour12}:${minuteStr}${ampm}`;
               }
               return `${hour12}${ampm}`;
@@ -203,12 +204,12 @@ export default function OctopusChart() {
           grid: { display: false },
         },
         y: {
-          ticks: { color: "#ffffff", font: { size: 14 } },
-          grid: { color: "rgba(255,255,255,0.08)" },
+          ticks: { color: '#ffffff', font: { size: 14 } },
+          grid: { color: 'rgba(255,255,255,0.08)' },
         },
       },
     }),
-    [points, nowMs, startMs, endMs]
+    [points, nowMs, startMs, endMs],
   );
 
   return (
@@ -284,7 +285,7 @@ export default function OctopusChart() {
         <div
           className="hover-panel"
           style={{
-            position: "absolute",
+            position: 'absolute',
             left: hoverInfo.x ? hoverInfo.x + 8 : undefined,
             top: hoverInfo.y ? hoverInfo.y + 8 : undefined,
           }}
@@ -295,7 +296,7 @@ export default function OctopusChart() {
           <div>
             {hoverInfo.value !== null
               ? `${hoverInfo.value} p/kWh (inc VAT)`
-              : "No data"}
+              : 'No data'}
           </div>
         </div>
       ) : null}

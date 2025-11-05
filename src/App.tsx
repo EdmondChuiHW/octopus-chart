@@ -1,5 +1,5 @@
-import "./App.css";
-import OctopusChart from "./components/OctopusChart";
+import './App.css';
+import OctopusChart from './components/OctopusChart';
 
 function App() {
   return (

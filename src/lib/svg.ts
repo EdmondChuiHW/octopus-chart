@@ -4,7 +4,7 @@ export function buildWedgePath(
   rOuter: number,
   rInner: number,
   startAngle: number,
-  endAngle: number
+  endAngle: number,
 ) {
   const sa = startAngle - Math.PI / 2;
   const ea = endAngle - Math.PI / 2;

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const PricePointSchema = z.object({
   value_exc_vat: z.number(),

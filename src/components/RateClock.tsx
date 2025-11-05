@@ -1,9 +1,9 @@
-import type { PricePoint } from "../lib/types";
-import { incVatValue } from "../lib/priceUtils";
-import { buildWedgePath } from "../lib/svg";
-import { rateToColor } from "../lib/colors";
-import { formatTimeLocal } from "../lib/dateUtils";
-import type { ReactNode } from "react";
+import type { PricePoint } from '../lib/types';
+import { incVatValue } from '../lib/priceUtils';
+import { buildWedgePath } from '../lib/svg';
+import { rateToColor } from '../lib/colors';
+import { formatTimeLocal } from '../lib/dateUtils';
+import type { ReactNode } from 'react';
 
 type Hover = {
   label: string;
@@ -43,22 +43,22 @@ export default function RateClock({
 
   // compute midnight for the dateKey in Europe/London
   const dayStart = new Date(
-    new Date().toLocaleString("en-GB", {
-      timeZone: "Europe/London",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
+    new Date().toLocaleString('en-GB', {
+      timeZone: 'Europe/London',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }),
   );
-  if (dateKey !== dayStart.toLocaleDateString("en-GB")) {
-    const [dd, mm, yyyy] = dateKey.split("/");
+  if (dateKey !== dayStart.toLocaleDateString('en-GB')) {
+    const [dd, mm, yyyy] = dateKey.split('/');
     dayStart.setFullYear(Number(yyyy), Number(mm) - 1, Number(dd));
   }
 
   const wedges: ReactNode[] = [];
   for (let i = 0; i < 24; i++) {
     const start = new Date(
-      dayStart.getTime() + (startHour * 60 + i * 30) * 60 * 1000
+      dayStart.getTime() + (startHour * 60 + i * 30) * 60 * 1000,
     );
     const end = new Date(start.getTime() + 30 * 60 * 1000);
     const match = segs.find((s) => s.valid_from.getTime() === start.getTime());
@@ -66,20 +66,20 @@ export default function RateClock({
     const angleStart = (i / 24) * Math.PI * 2;
     const angleEnd = ((i + 1) / 24) * Math.PI * 2;
     let color: string;
-    let strokeColor = "rgba(0,0,0,0.12)";
+    let strokeColor = 'rgba(0,0,0,0.12)';
     let strokeWidth = 1;
     if (isNaN(value)) {
-      color = "rgba(30,30,30,0.6)";
+      color = 'rgba(30,30,30,0.6)';
     } else {
       const base = rateToColor(value, min, max);
       if (end.getTime() <= nowMs) {
-        color = base.replace("rgb(", "rgba(").replace(")", ",0.28)");
+        color = base.replace('rgb(', 'rgba(').replace(')', ',0.28)');
       } else {
         color = base;
       }
     }
     if (nowMs >= start.getTime() && nowMs < end.getTime()) {
-      strokeColor = "#ffd54f";
+      strokeColor = '#ffd54f';
       strokeWidth = 4;
     }
 
@@ -99,7 +99,7 @@ export default function RateClock({
           });
         }}
         onMouseLeave={() => onHover(null)}
-      />
+      />,
     );
   }
 
@@ -122,7 +122,7 @@ export default function RateClock({
         dominantBaseline="middle"
       >
         {labelVal}
-      </text>
+      </text>,
     );
   }
 
@@ -144,7 +144,7 @@ export default function RateClock({
         strokeWidth={2}
         strokeLinecap="round"
         opacity={0.9}
-      />
+      />,
     );
   }
 
@@ -166,22 +166,22 @@ export default function RateClock({
         strokeWidth={1}
         strokeLinecap="round"
         opacity={0.6}
-      />
+      />,
     );
   }
 
   let nowMarker: ReactNode | null = null;
-  const nowDateKey = new Date(nowMs).toLocaleDateString("en-GB", {
-    timeZone: "Europe/London",
+  const nowDateKey = new Date(nowMs).toLocaleDateString('en-GB', {
+    timeZone: 'Europe/London',
   });
   if (nowDateKey === dateKey) {
     const localMidnight = new Date(
-      new Date().toLocaleString("en-GB", {
-        timeZone: "Europe/London",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
+      new Date().toLocaleString('en-GB', {
+        timeZone: 'Europe/London',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }),
     );
     const minutes = Math.floor((nowMs - localMidnight.getTime()) / 60000);
     const minutesIntoWindow = minutes - startHour * 60;
@@ -203,7 +203,7 @@ export default function RateClock({
     }
   }
 
-  const centerAmPm = startHour === 0 ? "AM" : "PM";
+  const centerAmPm = startHour === 0 ? 'AM' : 'PM';
 
   return (
     <div className="rate-clock" key={`${dateKey}-${startHour}`}>

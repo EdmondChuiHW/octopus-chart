@@ -50,8 +50,14 @@
   background: linear-gradient(180deg, #00121a 0%, #001a26 100%);
   min-height: 100vh;
   box-sizing: border-box;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial;
 }
 .app-header h1 {
   margin: 0 0 0.25rem 0;
