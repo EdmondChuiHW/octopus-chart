@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
+import { useQuery, type QueryFunctionContext } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { Bar } from "react-chartjs-2";
 import {
@@ -21,12 +23,17 @@ ChartJS.register(
   Legend
 );
 
-type PricePoint = {
-  value_exc_vat: number;
-  value_inc_vat?: number;
-  valid_from: string;
-  valid_to: string;
-};
+// Zod-backed PricePoint schema: accepts API timestamp strings and
+// preprocesses them into JS Date objects so the rest of the code can
+// rely on Date instances without re-parsing.
+export const PricePointSchema = z.object({
+  value_exc_vat: z.number(),
+  value_inc_vat: z.number().optional(),
+  valid_from: z.iso.datetime().transform((d) => new Date(d)),
+  valid_to: z.iso.datetime().transform((d) => new Date(d)),
+});
+
+export type PricePoint = z.infer<typeof PricePointSchema>;
 
 const DEFAULT_PRODUCT = "AGILE-24-10-01";
 const DEFAULT_TARIFF = "E-1R-AGILE-24-10-01-C"; // London (default). Can be changed in UI.
@@ -35,9 +42,9 @@ function isoOffsetHours(hours: number) {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
-function formatTimeLocal(iso: string) {
+function formatTimeLocal(date: Date | string) {
   try {
-    const d = new Date(iso);
+    const d = date instanceof Date ? date : new Date(date);
     // Use 12-hour clock with AM/PM for readability in the UI
     return d.toLocaleTimeString("en-US", {
       timeZone: "Europe/London",
@@ -46,25 +53,26 @@ function formatTimeLocal(iso: string) {
       hour12: true,
     });
   } catch {
-    return iso;
+    return String(date);
   }
 }
 
 export default function OctopusChart() {
   const [product, setProduct] = useState(DEFAULT_PRODUCT);
   const [tariff, setTariff] = useState(DEFAULT_TARIFF);
-  const [points, setPoints] = useState<PricePoint[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [nowMs, setNowMs] = useState<number>(Date.now());
-
-  async function fetchPrices(p: string, t: string) {
-    setLoading(true);
-    setError(null);
-    try {
-      // Request a window that safely covers "today and tomorrow" by asking
-      // from ~12 hours ago to ~36 hours ahead. This avoids timezone pitfalls
-      // in the browser while still returning the day-ahead Agile prices.
+  // useQuery will manage fetching/loading/error and provide the points
+  const {
+    data: points = [] as PricePoint[],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<PricePoint[], Error, PricePoint[], [string, string, string]>({
+    queryKey: ["prices", product, tariff],
+    // provide a typed QueryFunctionContext so `queryKey` elements are typed
+    queryFn: async (
+      ctx: QueryFunctionContext<[string, string, string]>
+    ): Promise<PricePoint[]> => {
+      const [, p, t] = ctx.queryKey;
       const period_from = isoOffsetHours(-12);
       const period_to = isoOffsetHours(36);
       const url = `https://api.octopus.energy/v1/products/${encodeURIComponent(
@@ -80,27 +88,30 @@ export default function OctopusChart() {
         throw new Error(`API returned ${res.status} ${res.statusText}`);
       }
       const json = await res.json();
-      const results: PricePoint[] = json.results || [];
-      // sort ascending by valid_from
-      results.sort(
-        (a, b) =>
-          new Date(a.valid_from).getTime() - new Date(b.valid_from).getTime()
-      );
-      setPoints(results);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-      setPoints([]);
-    } finally {
-      setLoading(false);
-    }
-  }
 
-  useEffect(() => {
-    // initial load
-    fetchPrices(product, tariff);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      // validate the API response and coerce timestamp strings into Dates
+      const ResponseSchema = z.object({
+        results: z.array(PricePointSchema).optional(),
+      });
+
+      const parsed = ResponseSchema.safeParse(json);
+      if (!parsed.success) {
+        // include the validation errors for easier debugging
+        throw new Error(
+          `API response validation failed: ${parsed.error.message}`
+        );
+      }
+
+      const results: PricePoint[] = parsed.data.results || [];
+      results.sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
+      return results;
+    },
+    // avoid refetching on window focus by default
+    refetchOnWindowFocus: false,
+  });
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  // Note: initial load and subsequent loads are handled by useQuery.
 
   // keep a live clock so the active period updates while the app is open
   useEffect(() => {
@@ -129,16 +140,16 @@ export default function OctopusChart() {
   const backgroundColors = dataValues.map((_, i) => {
     const p = points[i];
     if (!p) return "rgba(0,120,212,0.6)";
-    const start = new Date(p.valid_from).getTime();
-    const end = new Date(p.valid_to).getTime();
+    const start = p.valid_from.getTime();
+    const end = p.valid_to.getTime();
     if (nowMs >= start && nowMs < end) return "rgba(255,205,86,0.95)";
     if (nowMs >= end) return "rgba(0,120,212,0.28)";
     return "rgba(0,120,212,0.95)";
   });
 
   // expose start/end ms arrays so plugins can read the exact timestamps
-  const startMs = points.map((p) => new Date(p.valid_from).getTime());
-  const endMs = points.map((p) => new Date(p.valid_to).getTime());
+  const startMs = points.map((p) => p.valid_from.getTime());
+  const endMs = points.map((p) => p.valid_to.getTime());
 
   const data = {
     labels,
@@ -157,8 +168,9 @@ export default function OctopusChart() {
   };
 
   // --- Clock visualization helpers ---
-  const getLocalDateKey = (iso: string) => {
-    return new Date(iso).toLocaleDateString("en-GB", {
+  const getLocalDateKey = (date: Date | string) => {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleDateString("en-GB", {
       timeZone: "Europe/London",
     });
   };
@@ -186,10 +198,7 @@ export default function OctopusChart() {
     const arr = dayMap.get(key) || [];
     return arr
       .slice()
-      .sort(
-        (a, b) =>
-          new Date(a.valid_from).getTime() - new Date(b.valid_from).getTime()
-      );
+      .sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
   };
 
   // color scale mapping rate -> color (green=low, red=high)
@@ -279,7 +288,7 @@ export default function OctopusChart() {
       const end = new Date(start.getTime() + 30 * 60 * 1000);
       // find matching segment by valid_from
       const match = segs.find(
-        (s) => new Date(s.valid_from).getTime() === start.getTime()
+        (s) => s.valid_from.getTime() === start.getTime()
       );
       const value = match
         ? match.value_inc_vat ??
@@ -317,9 +326,7 @@ export default function OctopusChart() {
           strokeWidth={strokeWidth}
           onMouseEnter={(e) => {
             setHoverInfo({
-              label: `${formatTimeLocal(start.toISOString())}–${formatTimeLocal(
-                end.toISOString()
-              )}`,
+              label: `${formatTimeLocal(start)}–${formatTimeLocal(end)}`,
               value: isNaN(value) ? null : value,
               x: e.clientX,
               y: e.clientY,
@@ -597,7 +604,7 @@ export default function OctopusChart() {
             const p = points[idx];
             if (!p) return "";
             // determine the local start time components for this segment
-            const startDate = new Date(p.valid_from);
+            const startDate = p.valid_from;
             const parts = startDate.toLocaleString("en-GB", {
               timeZone: "Europe/London",
               hour: "2-digit",
@@ -608,7 +615,7 @@ export default function OctopusChart() {
             const hour24 = Number(hStr);
             const minute = Number(mStr);
             const start = startDate.getTime();
-            const end = new Date(p.valid_to).getTime();
+            const end = p.valid_to.getTime();
             // show label for full hours, or if this segment is the currently active one
             if (minute !== 0 && !(nowMs >= start && nowMs < end)) return "";
             const hour12 = ((hour24 + 11) % 12) + 1;
@@ -688,7 +695,8 @@ export default function OctopusChart() {
         className="controls"
         onSubmit={(e) => {
           e.preventDefault();
-          fetchPrices(product, tariff);
+          // trigger react-query refetch for the current product/tariff
+          void refetch();
         }}
       >
         <label>
@@ -707,18 +715,18 @@ export default function OctopusChart() {
             onChange={(e) => setTariff(e.target.value)}
           />
         </label>
-        <button type="submit" className="btn" disabled={loading}>
-          {loading ? "Loading…" : "Load rates"}
+        <button type="submit" className="btn" disabled={isLoading}>
+          {isLoading ? "Loading…" : "Load rates"}
         </button>
       </form>
 
       {error ? (
         <div role="alert" className="error">
-          Error: {error}
+          Error: {error instanceof Error ? error.message : String(error)}
         </div>
       ) : (
-        <div className="chart-wrap" aria-busy={loading}>
-          {points.length === 0 && !loading ? (
+        <div className="chart-wrap" aria-busy={isLoading}>
+          {points.length === 0 && !isLoading ? (
             <div className="placeholder">
               No price data available for the selected tariff / period.
             </div>
