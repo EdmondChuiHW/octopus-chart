@@ -21,8 +21,17 @@ type Props = {
   onHover: (h: Hover) => void;
 };
 
-export default function RateClock({ dateKey, startHour, title, segments, nowMs, onHover }: Props) {
-  const segs = segments.slice().sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
+export default function RateClock({
+  dateKey,
+  startHour,
+  title,
+  segments,
+  nowMs,
+  onHover,
+}: Props) {
+  const segs = segments
+    .slice()
+    .sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
   const vals = segs.map((s) => incVatValue(s));
   const min = vals.length ? Math.min(...vals) : 0;
   const max = vals.length ? Math.max(...vals) : 1;
@@ -48,13 +57,15 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
 
   const wedges: ReactNode[] = [];
   for (let i = 0; i < 24; i++) {
-    const start = new Date(dayStart.getTime() + (startHour * 60 + i * 30) * 60 * 1000);
+    const start = new Date(
+      dayStart.getTime() + (startHour * 60 + i * 30) * 60 * 1000
+    );
     const end = new Date(start.getTime() + 30 * 60 * 1000);
     const match = segs.find((s) => s.valid_from.getTime() === start.getTime());
     const value = match ? incVatValue(match) : NaN;
     const angleStart = (i / 24) * Math.PI * 2;
     const angleEnd = ((i + 1) / 24) * Math.PI * 2;
-    let color;
+    let color: string;
     let strokeColor = "rgba(0,0,0,0.12)";
     let strokeWidth = 1;
     if (isNaN(value)) {
@@ -76,7 +87,7 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
       <path
         key={`${startHour}-${i}`}
         d={buildWedgePath(cx, cy, rOuter, rInner, angleStart, angleEnd)}
-        fill={color as string}
+        fill={color}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         onMouseEnter={(e) => {
@@ -100,7 +111,16 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
     const raw = (startHour + h) % 12;
     const labelVal = raw === 0 ? 12 : raw;
     hourLabels.push(
-      <text key={`hour-${startHour}-${h}`} x={lx} y={ly} fill="#eaf6ff" fontSize={18} fontWeight={700} textAnchor="middle" dominantBaseline="middle">
+      <text
+        key={`hour-${startHour}-${h}`}
+        x={lx}
+        y={ly}
+        fill="#eaf6ff"
+        fontSize={18}
+        fontWeight={700}
+        textAnchor="middle"
+        dominantBaseline="middle"
+      >
         {labelVal}
       </text>
     );
@@ -114,7 +134,17 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
     const ox = cx + (rOuter - 2) * Math.cos(angle - Math.PI / 2);
     const oy = cy + (rOuter - 2) * Math.sin(angle - Math.PI / 2);
     hourTicks.push(
-      <line key={`tick-hour-${startHour}-${h}`} x1={ix} y1={iy} x2={ox} y2={oy} stroke="#eaf6ff" strokeWidth={2} strokeLinecap="round" opacity={0.9} />
+      <line
+        key={`tick-hour-${startHour}-${h}`}
+        x1={ix}
+        y1={iy}
+        x2={ox}
+        y2={oy}
+        stroke="#eaf6ff"
+        strokeWidth={2}
+        strokeLinecap="round"
+        opacity={0.9}
+      />
     );
   }
 
@@ -126,14 +156,33 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
     const ox = cx + (rOuter - 2) * Math.cos(angle - Math.PI / 2);
     const oy = cy + (rOuter - 2) * Math.sin(angle - Math.PI / 2);
     halfHourTicks.push(
-      <line key={`tick-half-${startHour}-${i}`} x1={ix} y1={iy} x2={ox} y2={oy} stroke="#eaf6ff" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
+      <line
+        key={`tick-half-${startHour}-${i}`}
+        x1={ix}
+        y1={iy}
+        x2={ox}
+        y2={oy}
+        stroke="#eaf6ff"
+        strokeWidth={1}
+        strokeLinecap="round"
+        opacity={0.6}
+      />
     );
   }
 
-  let nowMarker = null as ReactNode | null;
-  const nowDateKey = new Date(nowMs).toLocaleDateString("en-GB", { timeZone: "Europe/London" });
+  let nowMarker: ReactNode | null = null;
+  const nowDateKey = new Date(nowMs).toLocaleDateString("en-GB", {
+    timeZone: "Europe/London",
+  });
   if (nowDateKey === dateKey) {
-    const localMidnight = new Date(new Date().toLocaleString("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }));
+    const localMidnight = new Date(
+      new Date().toLocaleString("en-GB", {
+        timeZone: "Europe/London",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+    );
     const minutes = Math.floor((nowMs - localMidnight.getTime()) / 60000);
     const minutesIntoWindow = minutes - startHour * 60;
     if (minutesIntoWindow >= 0 && minutesIntoWindow < 12 * 60) {
@@ -141,7 +190,16 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
       const angle = frac * Math.PI * 2;
       const ax = cx + (rOuter - 6) * Math.cos(angle - Math.PI / 2);
       const ay = cy + (rOuter - 6) * Math.sin(angle - Math.PI / 2);
-      nowMarker = <circle cx={ax} cy={ay} r={6} fill="#ffd54f" stroke="#b37a00" strokeWidth={2} />;
+      nowMarker = (
+        <circle
+          cx={ax}
+          cy={ay}
+          r={6}
+          fill="#ffd54f"
+          stroke="#b37a00"
+          strokeWidth={2}
+        />
+      );
     }
   }
 
@@ -151,8 +209,22 @@ export default function RateClock({ dateKey, startHour, title, segments, nowMs, 
     <div className="rate-clock" key={`${dateKey}-${startHour}`}>
       <div className="clock-title">{title}</div>
       <svg width={260} height={260} viewBox={`0 0 260 260`} aria-hidden>
-        <g transform={`translate(0,0)`}>{wedges}<g className="hour-ticks">{hourTicks}</g><g className="half-hour-ticks">{halfHourTicks}</g><g className="hour-labels">{hourLabels}</g>
-          <text x={cx} y={cy} fill="#eaf6ff" fontSize={18} fontWeight={700} textAnchor="middle" dominantBaseline="middle">{centerAmPm}</text>
+        <g transform={`translate(0,0)`}>
+          {wedges}
+          <g className="hour-ticks">{hourTicks}</g>
+          <g className="half-hour-ticks">{halfHourTicks}</g>
+          <g className="hour-labels">{hourLabels}</g>
+          <text
+            x={cx}
+            y={cy}
+            fill="#eaf6ff"
+            fontSize={18}
+            fontWeight={700}
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            {centerAmPm}
+          </text>
         </g>
         {nowMarker}
       </svg>

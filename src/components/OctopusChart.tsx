@@ -7,7 +7,12 @@ import { axisTickPluginFactory } from "./chartPlugins/axisTickPlugin";
 import { formatTimeLocal, getLocalDateKey } from "../lib/dateUtils";
 import { incVatValue, buildStartEndMs } from "../lib/priceUtils";
 import type { PricePoint } from "../lib/types";
-import type { ChartOptions, ChartData, ChartDataset, Chart } from "chart.js";
+import type {
+  ChartOptions,
+  ChartData,
+  ChartDataset,
+  TooltipItem,
+} from "chart.js";
 
 const DEFAULT_PRODUCT = "AGILE-24-10-01";
 const DEFAULT_TARIFF = "E-1R-AGILE-24-10-01-C";
@@ -16,7 +21,7 @@ export default function OctopusChart() {
   const [product, setProduct] = useState(DEFAULT_PRODUCT);
   const [tariff, setTariff] = useState(DEFAULT_TARIFF);
   const {
-    data: points = [] as PricePoint[],
+    data: points = [],
     isLoading,
     error,
     refetch,
@@ -52,12 +57,17 @@ export default function OctopusChart() {
 
   const { startMs, endMs } = buildStartEndMs(points);
 
+  type ExtDataset = ChartDataset<"bar", number[]> & {
+    startMs: number[];
+    endMs: number[];
+  };
+
   const data = useMemo((): ChartData<"bar", number[], string> => {
-    const dataset: ChartDataset<"bar", number[]> & { startMs?: number[]; endMs?: number[] } = {
+    const dataset: ExtDataset = {
       label: "p/kWh (inc VAT)",
       data: dataValues,
-      backgroundColor: backgroundColors as unknown as string[],
-      borderColor: backgroundColors as unknown as string[],
+      backgroundColor: backgroundColors,
+      borderColor: backgroundColors,
       borderWidth: 1,
       startMs,
       endMs,
@@ -77,8 +87,9 @@ export default function OctopusChart() {
     const map = new Map<string, PricePoint[]>();
     for (const p of points) {
       const k = getLocalDateKey(p.valid_from);
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(p);
+      const arr = map.get(k);
+      if (arr) arr.push(p);
+      else map.set(k, [p]);
     }
     return map;
   }, [points]);
@@ -95,7 +106,8 @@ export default function OctopusChart() {
     y?: number;
   } | null>(null);
 
-  const options: ChartOptions<"bar"> = useMemo(() => ({
+  const options: ChartOptions<"bar"> = useMemo(
+    () => ({
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
@@ -104,15 +116,10 @@ export default function OctopusChart() {
         tooltip: {
           enabled: true,
           callbacks: {
-            title: (items: unknown[]) => {
-              const first = items[0] as { label?: string } | undefined;
-              return first?.label || "";
-            },
-            label: (ctx: unknown) => {
-              const parsed = (ctx as { parsed?: { y?: number } }).parsed;
-              const v = parsed?.y;
-              if (v === null || v === undefined) return "No data";
-              return `${v} p/kWh (inc VAT)`;
+            title: (items: TooltipItem<"bar">[]) => items[0]?.label ?? "",
+            label: (ctx: TooltipItem<"bar">) => {
+              const v = ctx.parsed.y;
+              return v == null ? "No data" : `${v} p/kWh (inc VAT)`;
             },
           },
           bodyFont: { size: 16 },
@@ -123,72 +130,39 @@ export default function OctopusChart() {
       scales: {
         x: {
           ticks: {
-            backdropColor: (ctx: unknown) => {
-              try {
-                const context = ctx as { index?: number | string; chart?: Chart };
-                const idx = typeof context.index === "number" ? context.index : Number(context.index);
-                const chart = context.chart as Chart;
-                const ds = (chart.data.datasets?.[0] as unknown) as { startMs?: number[]; endMs?: number[] };
-                const start = ds?.startMs?.[idx];
-                const end = ds?.endMs?.[idx];
-                if (typeof start !== "number" || typeof end !== "number") return undefined;
-                const isActive = nowMs >= start && nowMs < end;
-                return isActive ? "#ffd54f" : undefined;
-              } catch {
-                return undefined;
-              }
+            backdropColor: (ctx) => {
+              const idx = Number(ctx.index);
+              const start = startMs[idx];
+              const end = endMs[idx];
+              const isActive = nowMs >= start && nowMs < end;
+              return isActive ? "#ffd54f" : undefined;
             },
-            showLabelBackdrop: (ctx: unknown) => {
-              try {
-                const context = ctx as { index?: number | string; chart?: Chart };
-                const idx = typeof context.index === "number" ? context.index : Number(context.index);
-                const chart = context.chart as Chart;
-                const ds = (chart.data.datasets?.[0] as unknown) as { startMs?: number[]; endMs?: number[] };
-                const start = ds?.startMs?.[idx];
-                const end = ds?.endMs?.[idx];
-                if (typeof start !== "number" || typeof end !== "number") return false;
-                return nowMs >= start && nowMs < end;
-              } catch {
-                return false;
-              }
+            showLabelBackdrop: (ctx) => {
+              const idx = Number(ctx.index);
+              const start = startMs[idx];
+              const end = endMs[idx];
+              return nowMs >= start && nowMs < end;
             },
-            color: (ctx: unknown) => {
-              const context = ctx as { index?: number | string; chart?: Chart };
-              const idx = typeof context.index === "number" ? context.index : Number(context.index);
-              try {
-                const chart = context.chart as Chart;
-                const ds = (chart.data.datasets?.[0] as unknown) as { startMs?: number[]; endMs?: number[] };
-                const start = ds?.startMs?.[idx];
-                const end = ds?.endMs?.[idx];
-                if (typeof start !== "number" || typeof end !== "number") return "#ffffff";
-                const isActive = nowMs >= start && nowMs < end;
-                return isActive ? "#000000" : "#ffffff";
-              } catch {
-                return "#ffffff";
-              }
+            color: (ctx) => {
+              const idx = Number(ctx.index);
+              const start = startMs[idx];
+              const end = endMs[idx];
+              const isActive = nowMs >= start && nowMs < end;
+              return isActive ? "#000000" : "#ffffff";
             },
             font: {
               size: 13,
-              weight: (ctx: unknown) => {
-                const context = ctx as { index?: number | string; chart?: Chart };
-                const idx = typeof context.index === "number" ? context.index : Number(context.index);
-                try {
-                  const chart = context.chart as Chart;
-                  const ds = (chart.data.datasets?.[0] as unknown) as { startMs?: number[]; endMs?: number[] };
-                  const start = ds?.startMs?.[idx];
-                  const end = ds?.endMs?.[idx];
-                  if (typeof start !== "number" || typeof end !== "number") return 400;
-                  const isActive = nowMs >= start && nowMs < end;
-                  return isActive ? 700 : 400;
-                } catch {
-                  return 400;
-                }
+              weight: (ctx) => {
+                const idx = ctx.index;
+                const start = startMs[idx];
+                const end = endMs[idx];
+                const isActive = nowMs >= start && nowMs < end;
+                return isActive ? 700 : 400;
               },
             },
             autoSkip: false,
             align: "center",
-            callback: (_value, index) => {
-              const idx = typeof index === "number" ? index : Number(index);
+            callback: (_value, idx) => {
               const p = points[idx];
               if (!p) return "";
               const startDate = p.valid_from;
@@ -221,7 +195,7 @@ export default function OctopusChart() {
         },
       },
     }),
-    [points, nowMs]
+    [points, nowMs, startMs, endMs]
   );
 
   return (

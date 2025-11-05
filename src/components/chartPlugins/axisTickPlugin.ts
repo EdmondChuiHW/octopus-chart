@@ -1,33 +1,32 @@
-import type { Chart, Plugin } from "chart.js";
+import type { Chart, Plugin, Scale, ChartDataset } from "chart.js";
 
-export function axisTickPluginFactory(nowMs?: number): Plugin<"bar"> {
+export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
   const plugin: Plugin<"bar"> = {
     id: "axisTickPlugin",
     afterDraw: (chart: Chart) => {
-      const xScale = chart.scales?.x;
+      const xScale = chart.scales.x;
       if (!xScale) return;
       const ctx = chart.ctx as CanvasRenderingContext2D;
       ctx.save();
       const chartBottom = chart.chartArea?.bottom ?? 0;
 
-      const ds = chart.data.datasets?.[0] as unknown as {
-        startMs?: number[];
-        endMs?: number[];
+      type ExtDs = ChartDataset<"bar", number[]> & {
+        startMs: number[];
+        endMs: number[];
       };
-      const starts: number[] = (ds && ds.startMs) || [];
-      const ends: number[] = (ds && ds.endMs) || [];
-      const now = typeof nowMs === "number" ? nowMs : Date.now();
+      const ds = (chart.data.datasets as ExtDs[])[0];
+      const starts: number[] = ds.startMs || [];
+      const ends: number[] = ds.endMs || [];
+      const now = nowMs;
 
       for (let i = 0; i < xScale.ticks.length; i++) {
         const tick = xScale.ticks[i];
-        const idx = typeof (tick as { index?: number }).index === "number" ? (tick as { index?: number }).index! : i;
-        const x = typeof xScale.getPixelForTick === "function"
-          ? xScale.getPixelForTick(idx)
-          : xScale.getPixelForValue?.(tick.value) ?? 0;
+        const idx = (tick as { index?: number }).index ?? i;
+        const x = xScale.getPixelForTick(idx);
         const isMajor = !!tick.label;
         const s = starts[idx];
         const e = ends[idx];
-        const isActive = typeof s === "number" && typeof e === "number" && now >= s && now < e;
+        const isActive = now >= s && now < e;
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
         ctx.strokeStyle = isActive ? "#ffd54f" : "rgba(234,246,255,0.9)";
