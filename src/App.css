@@ -40,3 +40,176 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App-specific high-contrast styles */
+.app-root {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #ffffff;
+  background: linear-gradient(180deg, #00121a 0%, #001a26 100%);
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+}
+.app-header h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.6rem;
+  color: #ffffff;
+}
+.subtitle {
+  color: #d6f1ff;
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+}
+.octopus-section .controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.octopus-section .controls label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: #eaf6ff;
+}
+.octopus-section input {
+  font-size: 1.05rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #02151c;
+  color: #fff;
+  margin-top: 0.35rem;
+}
+.btn {
+  background: #00b0ff;
+  color: #001823;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chart-wrap {
+  height: 520px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  padding: 0.75rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+.placeholder {
+  color: #ffe;
+  padding: 2rem;
+  font-size: 1rem;
+}
+.note {
+  margin-top: 0.75rem;
+  color: #cceeff;
+  font-size: 0.9rem;
+}
+.error {
+  color: #ffb4b4;
+  background: rgba(255, 0, 0, 0.04);
+  padding: 0.6rem;
+  border-radius: 8px;
+}
+
+.app-footer {
+  margin-top: 1.25rem;
+  color: #cfefff;
+}
+
+/* clocks */
+.clocks-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.rate-clock {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.6rem;
+  border-radius: 10px;
+  display: inline-block;
+}
+.rate-clock svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Responsive: mobile / narrow widths */
+@media (max-width: 800px) {
+  #root,
+  .app-root {
+    padding: 1rem;
+  }
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+  .octopus-section .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .octopus-section .controls label {
+    width: 100%;
+  }
+  .octopus-section input {
+    width: 100%;
+  }
+  .btn {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+  .chart-wrap {
+    height: 380px;
+  }
+  .clocks-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .rate-clock {
+    flex: 1 1 48%;
+    max-width: 48%;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .chart-wrap {
+    height: 320px;
+  }
+  .rate-clock {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  .hour-labels text {
+    font-size: 16px !important;
+  }
+  .clock-title {
+    font-size: 0.9rem;
+  }
+}
+.clock-title {
+  color: #eaf6ff;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  text-align: center;
+}
+.hover-panel {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
