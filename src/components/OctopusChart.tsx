@@ -129,12 +129,18 @@ export default function OctopusChart() {
       },
       scales: {
         x: {
+          // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
+          type: "timeseries",
           ticks: {
+            major: {
+              enabled: true,
+            },
             backdropColor: (ctx) => {
               const idx = Number(ctx.index);
               const start = startMs[idx];
               const end = endMs[idx];
               const isActive = nowMs >= start && nowMs < end;
+              ctx.tick.major = isActive;
               return isActive ? "#ffd54f" : undefined;
             },
             showLabelBackdrop: (ctx) => {
@@ -150,8 +156,15 @@ export default function OctopusChart() {
               const isActive = nowMs >= start && nowMs < end;
               return isActive ? "#000000" : "#ffffff";
             },
+            backdropPadding: 4,
             font: {
-              size: 13,
+              size: (ctx) => {
+                const idx = ctx.index;
+                const start = startMs[idx];
+                const end = endMs[idx];
+                const isActive = nowMs >= start && nowMs < end;
+                return isActive ? 14 : 12;
+              },
               weight: (ctx) => {
                 const idx = ctx.index;
                 const start = startMs[idx];

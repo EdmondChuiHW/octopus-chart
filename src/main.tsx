@@ -6,21 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Chart as ChartJS,
   BarElement,
-  CategoryScale,
   LinearScale,
   Tooltip,
   Title,
   Legend,
 } from "chart.js";
+import { MyScale } from "./components/MyScale.ts";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Title,
-  Legend
-);
+ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyScale);
 
 const queryClient = new QueryClient();
 

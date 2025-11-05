@@ -1,4 +1,4 @@
-import type { Chart, Plugin, Scale, ChartDataset } from "chart.js";
+import type { Chart, Plugin, ChartDataset } from "chart.js";
 
 export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
   const plugin: Plugin<"bar"> = {
@@ -6,9 +6,10 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
     afterDraw: (chart: Chart) => {
       const xScale = chart.scales.x;
       if (!xScale) return;
-      const ctx = chart.ctx as CanvasRenderingContext2D;
+
+      const ctx = chart.ctx;
       ctx.save();
-      const chartBottom = chart.chartArea?.bottom ?? 0;
+      const chartBottom = chart.chartArea.bottom;
 
       type ExtDs = ChartDataset<"bar", number[]> & {
         startMs: number[];
@@ -21,11 +22,10 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<"bar"> {
 
       for (let i = 0; i < xScale.ticks.length; i++) {
         const tick = xScale.ticks[i];
-        const idx = (tick as { index?: number }).index ?? i;
-        const x = xScale.getPixelForTick(idx);
+        const x = xScale.getPixelForTick(i);
         const isMajor = !!tick.label;
-        const s = starts[idx];
-        const e = ends[idx];
+        const s = starts[i];
+        const e = ends[i];
         const isActive = now >= s && now < e;
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
