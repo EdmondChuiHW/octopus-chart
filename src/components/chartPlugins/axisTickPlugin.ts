@@ -29,8 +29,10 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<'bar'> {
         const isActive = now >= s && now < e;
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
-        ctx.strokeStyle = isActive ? '#ffd54f' : 'rgba(234,246,255,0.9)';
-        ctx.lineWidth = isActive ? 2 : isMajor ? 1.25 : 1;
+        ctx.strokeStyle = isActive
+          ? 'rgba(0,120,212,0.95)'
+          : 'rgba(234,246,255,0.9)';
+        ctx.lineWidth = isActive ? 4 : isMajor ? 1.25 : 1;
         ctx.moveTo(x, chartBottom + 0.5);
         ctx.lineTo(x, chartBottom + len + 0.5);
         ctx.stroke();

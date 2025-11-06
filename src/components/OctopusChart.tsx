@@ -13,6 +13,7 @@ import type {
   ChartDataset,
   TooltipItem,
 } from 'chart.js';
+import { rateToColor } from '../lib/colors';
 
 const DEFAULT_PRODUCT = 'AGILE-24-10-01';
 const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
@@ -42,19 +43,20 @@ export default function OctopusChart() {
     [points],
   );
   const dataValues = useMemo(() => points.map((p) => incVatValue(p)), [points]);
-  const backgroundColors = useMemo(
-    () =>
-      dataValues.map((_, i) => {
-        const p = points[i];
-        if (!p) return 'rgba(0,120,212,0.6)';
-        const start = p.valid_from.getTime();
-        const end = p.valid_to.getTime();
-        if (nowMs >= start && nowMs < end) return 'rgba(255,205,86,0.95)';
-        if (nowMs >= end) return 'rgba(0,120,212,0.28)';
-        return 'rgba(0,120,212,0.95)';
-      }),
-    [dataValues, points, nowMs],
-  );
+  const backgroundColors = useMemo(() => {
+    const prices = points.map((p) => p.value_inc_vat);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return dataValues.map((_, i) => {
+      const p = points[i];
+      if (!p) return 'rgba(0,120,212,0.6)';
+      const start = p.valid_from.getTime();
+      const end = p.valid_to.getTime();
+      if (nowMs >= start && nowMs < end) return 'rgba(0,120,212,0.95)';
+      if (nowMs >= end) return 'rgba(0,120,212,0.28)';
+      return rateToColor(p.value_inc_vat, min, max);
+    });
+  }, [dataValues, points, nowMs]);
 
   const { startMs, endMs } = buildStartEndMs(points);
 
@@ -135,7 +137,7 @@ export default function OctopusChart() {
               const end = endMs[idx];
               const isActive = nowMs >= start && nowMs < end;
               ctx.tick.major = isActive;
-              return isActive ? '#ffd54f' : undefined;
+              return isActive ? 'rgba(0,120,212,0.95)' : undefined;
             },
             showLabelBackdrop: (ctx) => {
               const idx = Number(ctx.index);
@@ -143,13 +145,7 @@ export default function OctopusChart() {
               const end = endMs[idx];
               return nowMs >= start && nowMs < end;
             },
-            color: (ctx) => {
-              const idx = Number(ctx.index);
-              const start = startMs[idx];
-              const end = endMs[idx];
-              const isActive = nowMs >= start && nowMs < end;
-              return isActive ? '#000000' : '#ffffff';
-            },
+            color: '#ffffff',
             backdropPadding: 4,
             font: {
               size: (ctx) => {
