@@ -65,10 +65,6 @@ export default function RateClock({
   const borderColor: string[] = [];
   const borderWidth: number[] = [];
 
-  const nowDateKey = new Date(nowMs).toLocaleDateString('en-GB', {
-    timeZone: 'Europe/London',
-  });
-
   for (let i = 0; i < 24; i++) {
     const start = new Date(
       dayStart.getTime() + (startHour * 60 + i * 30) * 60 * 1000,
@@ -80,6 +76,8 @@ export default function RateClock({
     labels.push(`${formatTimeLocal(start)}–${formatTimeLocal(end)}`);
     dataValues.push(isNaN(value) ? 0 : value);
 
+    const isActive = nowMs >= start.getTime() && nowMs < end.getTime();
+
     let color: string;
     if (isNaN(value)) {
       color = 'rgba(30,30,30,0.6)';
@@ -87,6 +85,8 @@ export default function RateClock({
       const base = rateToColor(value, min, max);
       if (end.getTime() <= nowMs) {
         color = base.replace('rgb(', 'rgba(').replace(')', ',0.28)');
+      } else if (isActive) {
+        color = 'rgba(0,120,212,0.95)';
       } else {
         color = base;
       }
@@ -94,8 +94,8 @@ export default function RateClock({
     backgroundColor.push(color);
 
     if (nowMs >= start.getTime() && nowMs < end.getTime()) {
-      borderColor.push('#ffd54f');
-      borderWidth.push(4);
+      borderColor.push('rgba(0,120,212,0.95)');
+      borderWidth.push(2);
     } else {
       borderColor.push('rgba(0,0,0,0.12)');
       borderWidth.push(1);
@@ -112,47 +112,6 @@ export default function RateClock({
         borderWidth,
       },
     ],
-  };
-
-  // small plugin to draw the 'now' marker when the date matches
-  const nowMarkerPlugin = {
-    id: 'nowMarkerPlugin',
-    afterDraw: (chart: Chart) => {
-      if (nowDateKey !== dateKey) return;
-
-      const localMidnight = new Date(
-        new Date().toLocaleString('en-GB', {
-          timeZone: 'Europe/London',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        }),
-      );
-      const minutes = Math.floor((nowMs - localMidnight.getTime()) / 60000);
-      const minutesIntoWindow = minutes - startHour * 60;
-      if (minutesIntoWindow < 0 || minutesIntoWindow >= 12 * 60) return;
-
-      const frac = minutesIntoWindow / (12 * 60);
-      const angle = frac * Math.PI * 2 - Math.PI / 2; // match svg offset
-
-      const ctx = chart.ctx;
-      const cx = chart.width / 2;
-      const cy = chart.height / 2;
-      const r = Math.min(chart.width, chart.height) / 2 - 20;
-
-      const ax = cx + r * Math.cos(angle);
-      const ay = cy + r * Math.sin(angle);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(ax, ay, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffd54f';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#b37a00';
-      ctx.stroke();
-      ctx.restore();
-    },
   };
 
   // plugin to draw hour/half-hour ticks and labels responsively
@@ -279,11 +238,7 @@ export default function RateClock({
     <div className="rate-clock" key={`${dateKey}-${startHour}`}>
       <div className="clock-title">{title}</div>
       <div style={containerStyle}>
-        <PolarArea
-          data={data}
-          options={options}
-          plugins={[nowMarkerPlugin, hourLabelsPlugin]}
-        />
+        <PolarArea data={data} options={options} plugins={[hourLabelsPlugin]} />
       </div>
     </div>
   );
