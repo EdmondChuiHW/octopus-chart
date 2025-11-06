@@ -139,7 +139,7 @@ export default function RateClock({
       ctx.save();
 
       // Draw hour ticks (thicker)
-      ctx.strokeStyle = '#eaf6ff';
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
       ctx.lineWidth = Math.max(2, rOuter * 0.018);
       ctx.globalAlpha = 0.9;
       for (let h = 0; h < 12; h++) {
@@ -159,6 +159,8 @@ export default function RateClock({
       ctx.lineWidth = Math.max(1, rOuter * 0.009);
       ctx.globalAlpha = 0.6;
       for (let i = 0; i < 24; i++) {
+        if (i % 2 === 0) continue; // skip hours
+
         const angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
         const ix = cx + rTickHalfInner * Math.cos(angle);
         const iy = cy + rTickHalfInner * Math.sin(angle);
@@ -217,8 +219,11 @@ export default function RateClock({
     },
     scales: {
       r: {
-        ticks: { display: false },
-        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: { display: false, count: 2 },
+        grid: {
+          color: 'rgba(255,255,255,0.6)',
+          lineWidth: 4,
+        },
       },
     },
   };
