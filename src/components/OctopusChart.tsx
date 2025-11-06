@@ -100,13 +100,6 @@ export default function OctopusChart() {
       .slice()
       .sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
 
-  const [hoverInfo, setHoverInfo] = useState<{
-    label: string;
-    value: number | null;
-    x?: number;
-    y?: number;
-  } | null>(null);
-
   const options: ChartOptions<'bar'> = useMemo(
     () => ({
       responsive: true,
@@ -253,7 +246,6 @@ export default function OctopusChart() {
           title="Today AM"
           segments={segmentsForDay(todayKey)}
           nowMs={nowMs}
-          onHover={setHoverInfo}
         />
         <RateClock
           dateKey={todayKey}
@@ -261,7 +253,6 @@ export default function OctopusChart() {
           title="Today PM"
           segments={segmentsForDay(todayKey)}
           nowMs={nowMs}
-          onHover={setHoverInfo}
         />
         <RateClock
           dateKey={tomorrowKey}
@@ -269,7 +260,6 @@ export default function OctopusChart() {
           title="Tomorrow AM"
           segments={segmentsForDay(tomorrowKey)}
           nowMs={nowMs}
-          onHover={setHoverInfo}
         />
         <RateClock
           dateKey={tomorrowKey}
@@ -277,29 +267,8 @@ export default function OctopusChart() {
           title="Tomorrow PM"
           segments={segmentsForDay(tomorrowKey)}
           nowMs={nowMs}
-          onHover={setHoverInfo}
         />
       </div>
-
-      {hoverInfo ? (
-        <div
-          className="hover-panel"
-          style={{
-            position: 'absolute',
-            left: hoverInfo.x ? hoverInfo.x + 8 : undefined,
-            top: hoverInfo.y ? hoverInfo.y + 8 : undefined,
-          }}
-        >
-          <div>
-            <strong>{hoverInfo.label}</strong>
-          </div>
-          <div>
-            {hoverInfo.value !== null
-              ? `${hoverInfo.value} p/kWh (inc VAT)`
-              : 'No data'}
-          </div>
-        </div>
-      ) : null}
 
       <div className="note">
         Tip: slide or hover across bars to see the half-hour range and price.
