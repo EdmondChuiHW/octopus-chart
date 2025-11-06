@@ -2,7 +2,13 @@ import type { PricePoint } from '../lib/types';
 import { incVatValue } from '../lib/priceUtils';
 import { rateToColor } from '../lib/colors';
 import { formatTimeLocal } from '../lib/dateUtils';
-import type { ChartData, ChartOptions, Chart, TooltipItem } from 'chart.js';
+import type {
+  ChartData,
+  ChartOptions,
+  Chart,
+  TooltipItem,
+  Plugin,
+} from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
 import {
@@ -115,7 +121,7 @@ export default function RateClock({
   };
 
   // plugin to draw hour/half-hour ticks and labels responsively
-  const hourLabelsPlugin = {
+  const hourLabelsPlugin: Plugin<'polarArea'> = {
     id: 'hourLabelsPlugin',
     afterDraw: (chart: Chart) => {
       const ctx = chart.ctx;
@@ -131,7 +137,9 @@ export default function RateClock({
         scale && scale.drawingArea
           ? scale.drawingArea
           : Math.min(width, height) / 2 - 12;
-      const rTickOuter = rOuter;
+
+      // TODO read from resolved scale grid lineWidth option
+      const rTickOuter = rOuter - 2;
       const rTickHourInner = rOuter - Math.max(12, rOuter * 0.12);
       const rTickHalfInner = rOuter - Math.max(8, rOuter * 0.08);
       const rLabel = rOuter - Math.max(24, rOuter * 0.22);
