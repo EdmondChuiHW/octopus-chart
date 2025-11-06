@@ -143,7 +143,10 @@
   background: rgba(255, 255, 255, 0.02);
   padding: 0.6rem;
   border-radius: 10px;
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  align-items: center;
 }
 .rate-clock svg {
   display: block;

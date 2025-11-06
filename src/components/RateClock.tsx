@@ -202,6 +202,9 @@ export default function RateClock({
 
   const options: ChartOptions<'polarArea'> = {
     maintainAspectRatio: false,
+    layout: {
+      padding: 8,
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -231,8 +234,8 @@ export default function RateClock({
   const containerStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    maxWidth: 260,
-    maxHeight: 260,
+    maxWidth: 300,
+    maxHeight: 300,
     position: 'relative',
     aspectRatio: '1/1',
     minWidth: 120,
