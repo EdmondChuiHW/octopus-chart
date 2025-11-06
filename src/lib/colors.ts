@@ -1,5 +1,7 @@
+import { COLORS } from './constants';
+
 export function rateToColor(value: number, min: number, max: number) {
-  if (isNaN(value)) return '#222';
+  if (isNaN(value)) return COLORS.NO_DATA_BG || '#222';
   const t = max > min ? (value - min) / (max - min) : 0.5;
   const r1 = 46,
     g1 = 204,

@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOctopusPrices } from '../hooks/useOctopusPrices';
-import Controls from './Controls';
 import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
-import { formatTimeLocal, getLocalDateKey } from '../lib/dateUtils';
-import { incVatValue, buildStartEndMs } from '../lib/priceUtils';
+import { getLocalDateKey } from '../lib/dateUtils';
+import { buildBarChartData } from '../lib/barUtils';
 import type { PricePoint } from '../lib/types';
 import type {
   ChartOptions,
@@ -13,52 +12,33 @@ import type {
   ChartDataset,
   TooltipItem,
 } from 'chart.js';
-import { rateToColor } from '../lib/colors';
+import { MS, LOCALES, TIMEZONES, TIMINGS } from '../lib/constants';
 
 const DEFAULT_PRODUCT = 'AGILE-24-10-01';
 const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
 
 export default function OctopusChart() {
-  const [product, setProduct] = useState(DEFAULT_PRODUCT);
-  const [tariff, setTariff] = useState(DEFAULT_TARIFF);
+  const product = DEFAULT_PRODUCT;
+  const tariff = DEFAULT_TARIFF;
   const {
     data: points = [],
     isLoading,
     error,
-    refetch,
   } = useOctopusPrices(product, tariff);
 
   const [nowMs, setNowMs] = useState<number>(Date.now());
   useEffect(() => {
-    const id = setInterval(() => setNowMs(Date.now()), 30_000);
+    const id = setInterval(
+      () => setNowMs(Date.now()),
+      TIMINGS.NOW_UPDATE_INTERVAL,
+    );
     return () => clearInterval(id);
   }, []);
 
-  const labels = useMemo(
-    () =>
-      points.map(
-        (p) =>
-          `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(p.valid_to)}`,
-      ),
-    [points],
+  const { labels, dataValues, backgroundColors, startMs, endMs } = useMemo(
+    () => buildBarChartData(points, nowMs),
+    [points, nowMs],
   );
-  const dataValues = useMemo(() => points.map((p) => incVatValue(p)), [points]);
-  const backgroundColors = useMemo(() => {
-    const prices = points.map((p) => p.value_inc_vat);
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return dataValues.map((_, i) => {
-      const p = points[i];
-      if (!p) return 'rgba(0,120,212,0.6)';
-      const start = p.valid_from.getTime();
-      const end = p.valid_to.getTime();
-      if (nowMs >= start && nowMs < end) return 'rgba(0,120,212,0.95)';
-      if (nowMs >= end) return 'rgba(0,120,212,0.28)';
-      return rateToColor(p.value_inc_vat, min, max);
-    });
-  }, [dataValues, points, nowMs]);
-
-  const { startMs, endMs } = buildStartEndMs(points);
 
   type ExtDataset = ChartDataset<'bar', number[]> & {
     startMs: number[];
@@ -78,12 +58,12 @@ export default function OctopusChart() {
     return { labels, datasets: [dataset] };
   }, [labels, dataValues, backgroundColors, startMs, endMs]);
 
-  const todayKey = new Date(nowMs).toLocaleDateString('en-GB', {
-    timeZone: 'Europe/London',
+  const todayKey = new Date(nowMs).toLocaleDateString(LOCALES.EN_GB, {
+    timeZone: TIMEZONES.LONDON,
   });
-  const tomorrowKey = new Date(nowMs + 24 * 3600 * 1000).toLocaleDateString(
-    'en-GB',
-    { timeZone: 'Europe/London' },
+  const tomorrowKey = new Date(nowMs + MS.PER_DAY).toLocaleDateString(
+    LOCALES.EN_GB,
+    { timeZone: TIMEZONES.LONDON },
   );
 
   const dayMap = useMemo(() => {
@@ -202,19 +182,7 @@ export default function OctopusChart() {
   );
 
   return (
-    <section className="octopus-section">
-      <Controls
-        product={product}
-        tariff={tariff}
-        setProduct={setProduct}
-        setTariff={setTariff}
-        onSubmit={(e) => {
-          e.preventDefault();
-          void refetch();
-        }}
-        isLoading={isLoading}
-      />
-
+    <>
       {error ? (
         <div role="alert" className="error">
           Error: {error instanceof Error ? error.message : String(error)}
@@ -271,6 +239,6 @@ export default function OctopusChart() {
         Tomorrow's day-ahead prices may become available after 16:00–20:00 local
         time.
       </div>
-    </section>
+    </>
   );
 }

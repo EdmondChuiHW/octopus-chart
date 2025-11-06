@@ -5,47 +5,11 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 /* App-specific high-contrast styles */
 .app-root {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: clamp(0.75rem, 2.5vw, 1.5rem);
   color: #ffffff;
   background: linear-gradient(180deg, #00121a 0%, #001a26 100%);
   min-height: 100vh;
@@ -61,7 +25,7 @@
 }
 .app-header h1 {
   margin: 0 0 0.25rem 0;
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 2.6vw, 1.6rem);
   color: #ffffff;
 }
 .subtitle {
@@ -69,38 +33,9 @@
   margin: 0 0 1rem 0;
   font-size: 0.95rem;
 }
-.octopus-section .controls {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.octopus-section .controls label {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.9rem;
-  color: #eaf6ff;
-}
-.octopus-section input {
-  font-size: 1.05rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #02151c;
-  color: #fff;
-  margin-top: 0.35rem;
-}
-.btn {
-  background: #00b0ff;
-  color: #001823;
-  padding: 0.55rem 0.9rem;
-  border-radius: 8px;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-}
+
 .chart-wrap {
-  height: 520px;
+  height: clamp(320px, 40vh, 520px);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.02),
@@ -138,6 +73,7 @@
   gap: 1rem;
   justify-content: center;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 .rate-clock {
   background: rgba(255, 255, 255, 0.02);
@@ -147,6 +83,11 @@
   flex-direction: column;
   justify-items: center;
   align-items: center;
+  /* responsive flex: prefer 240px basis, but allow shrink/grow to fit row */
+  flex: 1 1 240px;
+  max-width: 300px;
+  box-sizing: border-box;
+  text-align: center;
 }
 .rate-clock svg {
   display: block;
@@ -154,64 +95,28 @@
   height: auto;
 }
 
-/* Responsive: mobile / narrow widths */
-@media (max-width: 800px) {
-  #root,
-  .app-root {
-    padding: 1rem;
-  }
-  .app-header h1 {
-    font-size: 1.25rem;
-  }
-  .octopus-section .controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  .octopus-section .controls label {
-    width: 100%;
-  }
-  .octopus-section input {
-    width: 100%;
-  }
-  .btn {
-    width: 100%;
-    margin-top: 0.25rem;
-  }
-  .chart-wrap {
-    height: 380px;
-  }
-  .clocks-row {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .rate-clock {
-    flex: 1 1 48%;
-    max-width: 48%;
-    box-sizing: border-box;
-    text-align: center;
-    padding: 0.5rem;
-  }
+/* chart container sizing moved from inline styles in RateClock.tsx */
+.rate-clock .chart-container {
+  width: 100%;
+  height: 100%;
+  max-width: 300px; /* mirrors CLOCK_LAYOUT.CONTAINER.maxWidth */
+  max-height: 300px; /* mirrors CLOCK_LAYOUT.CONTAINER.maxHeight */
+  min-width: 120px; /* mirrors CLOCK_LAYOUT.CONTAINER.minWidth */
+  min-height: 120px; /* mirrors CLOCK_LAYOUT.CONTAINER.minHeight */
+  position: relative;
+  aspect-ratio: 1 / 1;
 }
 
-@media (max-width: 420px) {
-  .chart-wrap {
-    height: 320px;
-  }
-  .rate-clock {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
-  .hour-labels text {
-    font-size: 16px !important;
-  }
-  .clock-title {
-    font-size: 0.9rem;
-  }
-}
+/* Responsive behavior handled via clamp() and flex-wrap; removed explicit max-width media queries */
 .clock-title {
   color: #eaf6ff;
   font-weight: 700;
   margin-bottom: 0.35rem;
   text-align: center;
+  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+}
+
+/* Responsive SVG hour label sizing without media queries */
+.hour-labels text {
+  font-size: clamp(14px, 2.4vw, 18px) !important;
 }
