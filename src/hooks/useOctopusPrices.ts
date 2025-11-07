@@ -34,7 +34,7 @@ export function useOctopusPrices(product: string, tariff: string) {
         );
       }
 
-      const results: PricePoint[] = parsed.data.results || [];
+      const results = parsed.data.results;
       results.sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
       return results;
     },

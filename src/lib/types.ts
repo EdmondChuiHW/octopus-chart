@@ -10,5 +10,5 @@ export const PricePointSchema = z.object({
 export type PricePoint = z.infer<typeof PricePointSchema>;
 
 export const ResponseSchema = z.object({
-  results: z.array(PricePointSchema).optional(),
+  results: z.array(PricePointSchema),
 });
