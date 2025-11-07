@@ -9,19 +9,18 @@ export function hourLabelsPluginFactory(
   const plugin: Plugin<'polarArea'> = {
     id: 'hourLabelsPlugin',
     afterDraw: (chart: Chart) => {
-      const ctx = chart.ctx as CanvasRenderingContext2D;
+      const ctx = chart.ctx;
       const width = chart.width;
       const height = chart.height;
       const cx = width / 2;
       const cy = height / 2;
-      // Use Chart.js radial scale to align with the out-most grid ring
-      const scale = chart.scales && (chart.scales.r || chart.scales['r']);
+      const scale = chart.scales.r;
       if (!(scale instanceof RadialLinearScale)) return;
 
-      const rOuter =
-        scale && scale.drawingArea
-          ? scale.drawingArea
-          : Math.min(width, height) / 2 - CLOCK_LAYOUT.SCALE_FALLBACK_PADDING;
+      console.log('scale.drawingArea', scale.drawingArea);
+      const rOuter = scale.drawingArea
+        ? scale.drawingArea
+        : Math.min(width, height) / 2 - CLOCK_LAYOUT.SCALE_FALLBACK_PADDING;
 
       // TODO read from resolved scale grid lineWidth option
       const rTickOuter = rOuter - CLOCK_LAYOUT.R_TICK_OUTER_DELTA;

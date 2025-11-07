@@ -1,7 +1,8 @@
 import { COLORS } from './constants';
+import type { PointStatus } from './pointUtils';
 
 export function rateToColor(value: number, min: number, max: number) {
-  if (isNaN(value)) return COLORS.NO_DATA_BG || '#222';
+  if (isNaN(value)) return COLORS.NO_DATA_BG;
   const t = max > min ? (value - min) / (max - min) : 0.5;
   const r1 = 46,
     g1 = 204,
@@ -14,8 +15,6 @@ export function rateToColor(value: number, min: number, max: number) {
   const b = Math.round(b1 + (b2 - b1) * t);
   return `rgb(${r},${g},${b})`;
 }
-
-export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
 
 export function getPointStatus(
   nowMs: number,

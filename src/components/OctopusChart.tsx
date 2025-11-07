@@ -9,6 +9,7 @@ import type {
   ChartData,
   ChartDataset,
   TooltipItem,
+  Chart,
 } from 'chart.js';
 import { TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
@@ -38,6 +39,7 @@ export default function OctopusChart() {
     const dataset: ChartDataset<'bar', Point[]> = {
       label: 'p/kWh (inc VAT)',
       data: dataPoints,
+      borderRadius: 12,
       // supply per-datum colors as arrays derived from dataPoints
       backgroundColor: (ctx) => {
         return dataPoints.at(ctx.dataIndex)?.backgroundColor;
@@ -46,116 +48,13 @@ export default function OctopusChart() {
         return dataPoints.at(ctx.dataIndex)?.borderColor;
       },
       borderWidth: (ctx) => {
-        return !!dataPoints.at(ctx.dataIndex)?.borderColor ? 2 : undefined;
+        return dataPoints.at(ctx.dataIndex)?.borderColor != null
+          ? 2
+          : undefined;
       },
-      borderRadius: 12,
     };
     return { labels: dataPoints.map((d) => d.label), datasets: [dataset] };
   }, [dataPoints]);
-
-  const options: ChartOptions<'bar'> = useMemo(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      normalized: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          callbacks: {
-            title: (items: TooltipItem<'bar'>[]) => items[0]?.label ?? '',
-            label: (ctx: TooltipItem<'bar'>) => {
-              const v = ctx.parsed.y;
-              return v == null ? 'No data' : `${v} p/kWh`;
-            },
-          },
-          bodyFont: { size: 16 },
-          titleFont: { size: 14 },
-        },
-        title: { display: false },
-      },
-      scales: {
-        x: {
-          // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
-          type: 'timeseries',
-          ticks: {
-            major: {
-              enabled: true,
-            },
-            backdropColor: (ctx) => {
-              const idx = Number(ctx.index);
-              const datum = dataPoints[idx];
-              if (!datum) return undefined;
-              const start = datum.startMs;
-              const end = datum.endMs;
-              const isActive = nowMs >= start && nowMs < end;
-              ctx.tick.major = isActive;
-              return isActive ? 'rgba(0,120,212,0.95)' : undefined;
-            },
-            showLabelBackdrop: (ctx) => {
-              const idx = Number(ctx.index);
-              const datum = dataPoints[idx];
-              if (!datum) return false;
-              const start = datum.startMs;
-              const end = datum.endMs;
-              return nowMs >= start && nowMs < end;
-            },
-            color: '#ffffff',
-            backdropPadding: 4,
-            font: {
-              size: (ctx) => {
-                const idx = ctx.index as number;
-                const datum = dataPoints[idx];
-                if (!datum) return 12;
-                const isActive = nowMs >= datum.startMs && nowMs < datum.endMs;
-                return isActive ? 14 : 12;
-              },
-              weight: (ctx) => {
-                const idx = ctx.index as number;
-                const datum = dataPoints[idx];
-                if (!datum) return 400;
-                const isActive = nowMs >= datum.startMs && nowMs < datum.endMs;
-                return isActive ? 700 : 400;
-              },
-            },
-            autoSkip: false,
-            align: 'center',
-            callback: (_value, idx) => {
-              const datum = dataPoints[idx as number];
-              if (!datum) return '';
-              const startDate = new Date(datum.startMs);
-              const parts = startDate.toLocaleString('en-GB', {
-                timeZone: 'Europe/London',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              });
-              const [hStr, mStr] = parts.split(':');
-              const hour24 = Number(hStr);
-              const minute = Number(mStr);
-              const start = datum.startMs;
-              const end = datum.endMs;
-              if (minute !== 0 && !(nowMs >= start && nowMs < end)) return '';
-              const hour12 = ((hour24 + 11) % 12) + 1;
-              const ampm = hour24 >= 12 ? 'pm' : 'am';
-              if (minute !== 0 && nowMs >= start && nowMs < end) {
-                const minuteStr = mStr.padStart(2, '0');
-                return `${hour12}:${minuteStr}${ampm}`;
-              }
-              return `${hour12}${ampm}`;
-            },
-          },
-          grid: { display: false },
-        },
-        y: {
-          ticks: { color: '#ffffff', font: { size: 14 } },
-          grid: { color: 'rgba(255,255,255,0.08)' },
-        },
-      },
-    }),
-    [dataPoints, nowMs],
-  );
 
   return (
     <>
@@ -173,7 +72,7 @@ export default function OctopusChart() {
             <PriceChart
               data={data}
               options={options}
-              plugins={[axisTickPluginFactory(nowMs)]}
+              plugins={[axisTickPluginFactory()]}
             />
           )}
         </div>
@@ -231,3 +130,73 @@ function useNowMs(): number {
 
   return nowMs;
 }
+
+function getPoints({ chart }: { chart: Chart }): Point[] {
+  return chart.data.datasets[0].data as Point[];
+}
+
+const options: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      enabled: true,
+      callbacks: {
+        label: (ctx: TooltipItem<'bar'>) => {
+          const v = ctx.parsed.y;
+          return v == null ? 'No data' : `${v}p/kWh`;
+        },
+      },
+      bodyFont: { size: 16 },
+      titleFont: { size: 14 },
+    },
+    title: { display: false },
+  },
+  scales: {
+    x: {
+      // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
+      type: 'timeseries',
+
+      ticks: {
+        color: '#ffffff',
+        backdropPadding: 4,
+        autoSkip: false,
+        align: 'center',
+        backdropColor: (ctx) => {
+          const pointsIndex = ctx.tick.value;
+          return getPoints(ctx).at(pointsIndex)?.status === 'active'
+            ? 'rgba(0,120,212,0.95)'
+            : undefined;
+        },
+        showLabelBackdrop: (ctx) => {
+          const pointsIndex = ctx.tick.value;
+          return getPoints(ctx).at(pointsIndex)?.status === 'active';
+        },
+        font: {
+          size: (ctx) => {
+            const pointsIndex = ctx.tick.value;
+            return getPoints(ctx).at(pointsIndex)?.status === 'active'
+              ? 14
+              : 12;
+          },
+          weight: (ctx) => {
+            const pointsIndex = ctx.tick.value;
+            return getPoints(ctx).at(pointsIndex)?.status === 'active'
+              ? 700
+              : 400;
+          },
+        },
+        callback(_val, index) {
+          return getPoints(this).at(index)?.tickLabel;
+        },
+      },
+      grid: { display: false },
+    },
+    y: {
+      ticks: { color: '#ffffff', font: { size: 14 } },
+      grid: { color: 'rgba(255,255,255,0.08)' },
+    },
+  },
+};

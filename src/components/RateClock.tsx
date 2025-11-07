@@ -19,6 +19,7 @@ import {
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
 import type { Point } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
+import { COLORS } from '../lib/constants';
 
 ChartJS.register(
   PolarAreaController,
@@ -48,11 +49,8 @@ export default function RateClock({
     const out: (Point | undefined)[] = [];
     for (let i = 0; i < 24; i++) {
       const key = addMinutes(start, i * 30).getTime();
-      if (pointMap.has(key)) {
-        out.push(pointMap.get(key)!);
-      } else {
-        out.push(undefined);
-      }
+      // pushing undefined is also intended
+      out.push(pointMap.get(key));
     }
 
     return out;
@@ -71,7 +69,7 @@ export default function RateClock({
         return points.at(ctx.dataIndex)?.borderColor ?? 'rgba(0,0,0,0.9)';
       },
       borderWidth: (ctx) => {
-        return !!points.at(ctx.dataIndex)?.borderColor ? 4 : 1;
+        return points.at(ctx.dataIndex)?.borderColor != null ? 4 : 1;
       },
       borderRadius: 4,
       borderAlign: 'inner',
@@ -105,10 +103,8 @@ const options: ChartOptions<'polarArea'> = {
     tooltip: {
       enabled: true,
       callbacks: {
-        title: (items: TooltipItem<'polarArea'>[]) => items[0]?.label ?? '',
         label: (ctx: TooltipItem<'polarArea'>) => {
-          const v = ctx.parsed.r;
-          return v == null ? 'No data' : `${v} p/kWh`;
+          return `${ctx.parsed.r}p/kWh`;
         },
       },
       bodyFont: { size: 16 },
@@ -119,7 +115,7 @@ const options: ChartOptions<'polarArea'> = {
     r: {
       ticks: { display: false, count: 2 },
       grid: {
-        color: 'rgba(255,255,255,0.6)',
+        color: COLORS.CLOCK_CIRCLE,
         lineWidth: 4,
       },
     },

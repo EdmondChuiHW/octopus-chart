@@ -11,7 +11,7 @@ import {
   Title,
   Legend,
 } from 'chart.js';
-import { MyBarScale } from './components/MyScale.ts';
+import { MyBarScale } from './components/MyBarScale.ts';
 
 ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyBarScale);
 

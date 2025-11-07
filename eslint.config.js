@@ -11,18 +11,32 @@ export default defineConfig([
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      tseslint.configs.strictTypeChecked,
       reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
     ],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        projectService: true,
+      },
     },
     rules: {
-      'no-unused-vars': {
-        argsIgnorePattern: '^_',
-      },
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/restrict-template-expressions': [
+        'error',
+        {
+          allowNumber: true,
+          allowNever: true,
+        },
+      ],
+      '@typescript-eslint/no-confusing-void-expression': 'off',
     },
   },
 ]);

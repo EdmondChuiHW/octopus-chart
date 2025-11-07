@@ -1,38 +1,28 @@
 import type { Chart, Plugin, ChartDataset } from 'chart.js';
+import type { Point } from '../../lib/pointUtils';
+import { getMinutes } from 'date-fns';
 
-export function axisTickPluginFactory(nowMs = Date.now()): Plugin<'bar'> {
+export function axisTickPluginFactory(): Plugin<'bar'> {
   const plugin: Plugin<'bar'> = {
     id: 'axisTickPlugin',
     afterDraw: (chart: Chart) => {
       const xScale = chart.scales.x;
-      if (!xScale) return;
-
+      const chartBottom = chart.chartArea.bottom;
       const ctx = chart.ctx;
       ctx.save();
-      const chartBottom = chart.chartArea.bottom;
 
-      type ExtDs = ChartDataset<
-        'bar',
-        { x: number; y: number; startMs: number; endMs: number }[]
-      >;
-      const ds = (chart.data.datasets as ExtDs[])[0];
-      const data = ds?.data || [];
-      const now = nowMs;
+      type ExtDs = ChartDataset<'bar', Point[]>;
+      const points = (chart.data.datasets as ExtDs[])[0].data;
 
-      for (let i = 0; i < xScale.ticks.length; i++) {
-        const tick = xScale.ticks[i];
-        const x = xScale.getPixelForTick(i);
-        const isMajor = !!tick.label;
-        const datum = data[i] as
-          | { startMs?: number; endMs?: number }
-          | undefined;
-        const s =
-          datum && typeof datum.startMs === 'number'
-            ? datum.startMs
-            : undefined;
-        const e =
-          datum && typeof datum.endMs === 'number' ? datum.endMs : undefined;
-        const isActive = s != null && e != null && now >= s && now < e;
+      for (let tickIndex = 0; tickIndex < xScale.ticks.length; tickIndex++) {
+        const x = xScale.getPixelForTick(tickIndex);
+        const pointIndex = xScale.ticks[tickIndex].value;
+
+        const point = points.at(pointIndex);
+        if (!point) continue;
+
+        const isMajor = getMinutes(point.startMs) === 0;
+        const isActive = point.status === 'active';
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
         ctx.strokeStyle = isActive

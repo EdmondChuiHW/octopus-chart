@@ -25,9 +25,8 @@ export function useOctopusPrices(product: string, tariff: string) {
       if (!res.ok) {
         throw new Error(`API returned ${res.status} ${res.statusText}`);
       }
-      const json = await res.json();
 
-      const parsed = ResponseSchema.safeParse(json);
+      const parsed = ResponseSchema.safeParse(await res.json());
       if (!parsed.success) {
         throw new Error(
           `API response validation failed: ${parsed.error.message}`,

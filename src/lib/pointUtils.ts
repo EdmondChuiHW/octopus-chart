@@ -6,17 +6,18 @@ import {
   getPointStatus,
 } from './colors';
 
+export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
+
 export type Point = {
   // x is the start timestamp (ms) used by the timeseries scale
   x: number;
   // y is the numeric value (p/kWh inc VAT)
   y: number;
-  // explicit start/end ms kept for plugins/callbacks that need the range
   startMs: number;
   endMs: number;
-  // human readable label for tooltips and accessibility
   label: string;
-  // per-datum drawing styles
+  tickLabel: string | undefined;
+  status: PointStatus;
   backgroundColor: string;
   borderColor: string | undefined;
 };
@@ -29,7 +30,7 @@ export type Point = {
 export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
   const dataPoints: Point[] = [];
 
-  if (!points || points.length === 0) {
+  if (points.length === 0) {
     return dataPoints;
   }
 
@@ -42,13 +43,13 @@ export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
     const start = p.valid_from.getTime();
     const end = p.valid_to.getTime();
 
-    const label = `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(
-      p.valid_to,
-    )}`;
-    // label is stored on each datum; we no longer push to a separate labels array
+    const isOnTheHour = p.valid_from.getMinutes() === 0;
+
+    const startStr = formatTimeLocal(p.valid_from);
+    const endStr = formatTimeLocal(p.valid_to);
+    const label = `${startStr}–${endStr}`;
 
     const v = p.value_inc_vat;
-
     const status = getPointStatus(nowMs, start, end, v);
     const backgroundColor = getBackgroundColorForPoint(status, v, min, max);
     const borderColor = getBorderColorForPoint(status, v, min, max);
@@ -59,8 +60,10 @@ export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
       startMs: start,
       endMs: end,
       label,
+      tickLabel: status === 'active' || isOnTheHour ? startStr : undefined,
       backgroundColor,
       borderColor,
+      status,
     };
     dataPoints.push(datum);
   }

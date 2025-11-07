@@ -1,13 +1,3 @@
-// Centralized constants to avoid magic numbers and duplicated strings
-export const LOCALES = {
-  EN_GB: 'en-GB',
-  EN_US: 'en-US',
-} as const;
-
-export const TIMEZONES = {
-  LONDON: 'Europe/London',
-} as const;
-
 export const MS = {
   PER_MINUTE: 60_000,
   PER_HALF_HOUR: 30 * 60_000,
@@ -32,6 +22,7 @@ export const COLORS = {
   NO_DATA_BG: 'rgba(30,30,30,0.6)',
   BORDER_LIGHT: 'rgba(0,0,0,0.12)',
   HOUR_TICK: 'rgba(255,255,255,0.6)',
+  CLOCK_CIRCLE: 'rgba(255,255,255,0.6)',
   HALF_TICK: '#eaf6ff',
   HOUR_LABEL: '#eaf6ff',
 } as const;

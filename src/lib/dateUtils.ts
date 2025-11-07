@@ -1,10 +1,9 @@
-import { LOCALES, TIMEZONES, MS } from './constants';
+import { format } from 'date-fns';
 
 export function formatTimeLocal(date: Date) {
-  return date.toLocaleTimeString(LOCALES.EN_US, {
-    timeZone: TIMEZONES.LONDON,
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  if (date.getMinutes() === 0) {
+    return format(date, 'h a');
+  }
+
+  return format(date, 'h:mm a');
 }
