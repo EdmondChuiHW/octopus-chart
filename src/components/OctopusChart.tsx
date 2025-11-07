@@ -4,7 +4,7 @@ import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
 import { getLocalDateKey } from '../lib/dateUtils';
-import { buildBarChartData } from '../lib/barUtils';
+import { buildBarChartData, type BarDatum } from '../lib/barUtils';
 import type { PricePoint } from '../lib/types';
 import type {
   ChartOptions,
@@ -35,28 +35,24 @@ export default function OctopusChart() {
     return () => clearInterval(id);
   }, []);
 
-  const { labels, dataValues, backgroundColors, startMs, endMs } = useMemo(
+  const { dataPoints } = useMemo(
     () => buildBarChartData(points, nowMs),
     [points, nowMs],
   );
 
-  type ExtDataset = ChartDataset<'bar', number[]> & {
-    startMs: number[];
-    endMs: number[];
-  };
+  const labels = useMemo(() => dataPoints.map((d) => d.label), [dataPoints]);
 
-  const data = useMemo((): ChartData<'bar', number[], string> => {
-    const dataset: ExtDataset = {
+  const data = useMemo((): ChartData<'bar', BarDatum[], string> => {
+    const dataset: ChartDataset<'bar', BarDatum[]> = {
       label: 'p/kWh (inc VAT)',
-      data: dataValues,
-      backgroundColor: backgroundColors,
-      borderColor: backgroundColors,
+      data: dataPoints,
+      // supply per-datum colors as arrays derived from dataPoints
+      backgroundColor: dataPoints.map((d) => d.backgroundColor),
+      borderColor: dataPoints.map((d) => d.borderColor),
       borderWidth: 1,
-      startMs,
-      endMs,
     };
     return { labels, datasets: [dataset] };
-  }, [labels, dataValues, backgroundColors, startMs, endMs]);
+  }, [labels, dataPoints]);
 
   const todayKey = new Date(nowMs).toLocaleDateString(LOCALES.EN_GB, {
     timeZone: TIMEZONES.LONDON,
@@ -113,42 +109,46 @@ export default function OctopusChart() {
             },
             backdropColor: (ctx) => {
               const idx = Number(ctx.index);
-              const start = startMs[idx];
-              const end = endMs[idx];
+              const datum = dataPoints[idx];
+              if (!datum) return undefined;
+              const start = datum.startMs;
+              const end = datum.endMs;
               const isActive = nowMs >= start && nowMs < end;
               ctx.tick.major = isActive;
               return isActive ? 'rgba(0,120,212,0.95)' : undefined;
             },
             showLabelBackdrop: (ctx) => {
               const idx = Number(ctx.index);
-              const start = startMs[idx];
-              const end = endMs[idx];
+              const datum = dataPoints[idx];
+              if (!datum) return false;
+              const start = datum.startMs;
+              const end = datum.endMs;
               return nowMs >= start && nowMs < end;
             },
             color: '#ffffff',
             backdropPadding: 4,
             font: {
               size: (ctx) => {
-                const idx = ctx.index;
-                const start = startMs[idx];
-                const end = endMs[idx];
-                const isActive = nowMs >= start && nowMs < end;
+                const idx = ctx.index as number;
+                const datum = dataPoints[idx];
+                if (!datum) return 12;
+                const isActive = nowMs >= datum.startMs && nowMs < datum.endMs;
                 return isActive ? 14 : 12;
               },
               weight: (ctx) => {
-                const idx = ctx.index;
-                const start = startMs[idx];
-                const end = endMs[idx];
-                const isActive = nowMs >= start && nowMs < end;
+                const idx = ctx.index as number;
+                const datum = dataPoints[idx];
+                if (!datum) return 400;
+                const isActive = nowMs >= datum.startMs && nowMs < datum.endMs;
                 return isActive ? 700 : 400;
               },
             },
             autoSkip: false,
             align: 'center',
             callback: (_value, idx) => {
-              const p = points[idx];
-              if (!p) return '';
-              const startDate = p.valid_from;
+              const datum = dataPoints[idx as number];
+              if (!datum) return '';
+              const startDate = new Date(datum.startMs);
               const parts = startDate.toLocaleString('en-GB', {
                 timeZone: 'Europe/London',
                 hour: '2-digit',
@@ -158,8 +158,8 @@ export default function OctopusChart() {
               const [hStr, mStr] = parts.split(':');
               const hour24 = Number(hStr);
               const minute = Number(mStr);
-              const start = startDate.getTime();
-              const end = p.valid_to.getTime();
+              const start = datum.startMs;
+              const end = datum.endMs;
               if (minute !== 0 && !(nowMs >= start && nowMs < end)) return '';
               const hour12 = ((hour24 + 11) % 12) + 1;
               const ampm = hour24 >= 12 ? 'pm' : 'am';
@@ -178,7 +178,7 @@ export default function OctopusChart() {
         },
       },
     }),
-    [points, nowMs, startMs, endMs],
+    [dataPoints, nowMs],
   );
 
   return (

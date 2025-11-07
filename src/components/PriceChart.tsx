@@ -1,8 +1,9 @@
 import { Bar } from 'react-chartjs-2';
 import type { ChartOptions, ChartData, Plugin } from 'chart.js';
+import type { BarDatum } from '../lib/barUtils';
 
 type Props = {
-  data: ChartData<'bar', number[], string>;
+  data: ChartData<'bar', BarDatum[], string>;
   options: ChartOptions<'bar'>;
   plugins?: Plugin<'bar'>[];
 };

@@ -11,22 +11,28 @@ export function axisTickPluginFactory(nowMs = Date.now()): Plugin<'bar'> {
       ctx.save();
       const chartBottom = chart.chartArea.bottom;
 
-      type ExtDs = ChartDataset<'bar', number[]> & {
-        startMs: number[];
-        endMs: number[];
-      };
+      type ExtDs = ChartDataset<
+        'bar',
+        { x: number; y: number; startMs: number; endMs: number }[]
+      >;
       const ds = (chart.data.datasets as ExtDs[])[0];
-      const starts: number[] = ds.startMs || [];
-      const ends: number[] = ds.endMs || [];
+      const data = ds?.data || [];
       const now = nowMs;
 
       for (let i = 0; i < xScale.ticks.length; i++) {
         const tick = xScale.ticks[i];
         const x = xScale.getPixelForTick(i);
         const isMajor = !!tick.label;
-        const s = starts[i];
-        const e = ends[i];
-        const isActive = now >= s && now < e;
+        const datum = data[i] as
+          | { startMs?: number; endMs?: number }
+          | undefined;
+        const s =
+          datum && typeof datum.startMs === 'number'
+            ? datum.startMs
+            : undefined;
+        const e =
+          datum && typeof datum.endMs === 'number' ? datum.endMs : undefined;
+        const isActive = s != null && e != null && now >= s && now < e;
         const len = isMajor ? 8 : 4;
         ctx.beginPath();
         ctx.strokeStyle = isActive

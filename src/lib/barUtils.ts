@@ -3,33 +3,38 @@ import { formatTimeLocal } from './dateUtils';
 import { rateToColor } from './colors';
 import { COLORS } from './constants';
 
+export type BarDatum = {
+  // x is the start timestamp (ms) used by the timeseries scale
+  x: number;
+  // y is the numeric value (p/kWh inc VAT)
+  y: number;
+  // explicit start/end ms kept for plugins/callbacks that need the range
+  startMs: number;
+  endMs: number;
+  // human readable label for tooltips and accessibility
+  label: string;
+  // per-datum drawing styles
+  backgroundColor?: string;
+  borderColor?: string;
+};
+
 export type BarChartData = {
-  labels: string[];
-  dataValues: number[];
-  backgroundColors: string[];
-  startMs: number[];
-  endMs: number[];
+  dataPoints: BarDatum[];
 };
 
 /**
  * Pure helper to build the bar chart arrays used by `OctopusChart`.
  * - labels: human readable range per bar
- * - dataValues: numeric p/kWh (inc VAT)
- * - backgroundColors: color per bar based on active/expired/no-data
- * - startMs / endMs: arrays of epoch ms for each segment
+ * - dataPoints: array of per-bar objects containing x/y, label and styling
  */
 export function buildBarChartData(
   points: PricePoint[],
   nowMs: number,
 ): BarChartData {
-  const labels: string[] = [];
-  const dataValues: number[] = [];
-  const backgroundColors: string[] = [];
-  const startMs: number[] = [];
-  const endMs: number[] = [];
+  const dataPoints: BarDatum[] = [];
 
   if (!points || points.length === 0) {
-    return { labels, dataValues, backgroundColors, startMs, endMs };
+    return { dataPoints };
   }
 
   // compute values for min/max colouring using incVatValue to be robust
@@ -40,27 +45,40 @@ export function buildBarChartData(
   for (const p of points) {
     const start = p.valid_from.getTime();
     const end = p.valid_to.getTime();
-    startMs.push(start);
-    endMs.push(end);
 
-    labels.push(
-      `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(p.valid_to)}`,
-    );
+    const label = `${formatTimeLocal(p.valid_from)}–${formatTimeLocal(
+      p.valid_to,
+    )}`;
+    // label is stored on each datum; we no longer push to a separate labels array
+
     const v = p.value_inc_vat;
-    dataValues.push(v);
+    const datum: BarDatum = {
+      x: start,
+      y: v,
+      startMs: start,
+      endMs: end,
+      label,
+      backgroundColor: undefined,
+      borderColor: undefined,
+    };
 
     // active if now is within [start, end)
+    let color: string;
     if (nowMs >= start && nowMs < end) {
-      backgroundColors.push(COLORS.PRIMARY_BLUE);
+      color = COLORS.PRIMARY_BLUE;
     } else if (nowMs >= end) {
       // past
-      backgroundColors.push(COLORS.PRIMARY_BLUE_FADED);
+      color = COLORS.PRIMARY_BLUE_FADED;
     } else if (Number.isNaN(v)) {
-      backgroundColors.push(COLORS.NO_DATA_BG);
+      color = COLORS.NO_DATA_BG;
     } else {
-      backgroundColors.push(rateToColor(v, min, max));
+      color = rateToColor(v, min, max);
     }
+
+    datum.backgroundColor = color;
+    datum.borderColor = color;
+    dataPoints.push(datum);
   }
 
-  return { labels, dataValues, backgroundColors, startMs, endMs };
+  return { dataPoints };
 }
