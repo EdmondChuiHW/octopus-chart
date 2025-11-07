@@ -1,7 +1,7 @@
 import { useQuery, type QueryFunctionContext } from '@tanstack/react-query';
-import { isoOffsetHours } from '../lib/dateUtils';
 import { ResponseSchema } from '../lib/types';
 import type { PricePoint } from '../lib/types';
+import { addDays, subHours } from 'date-fns';
 
 export function useOctopusPrices(product: string, tariff: string) {
   return useQuery<PricePoint[], Error, PricePoint[], [string, string, string]>({
@@ -10,8 +10,9 @@ export function useOctopusPrices(product: string, tariff: string) {
       ctx: QueryFunctionContext<[string, string, string]>,
     ): Promise<PricePoint[]> => {
       const [, p, t] = ctx.queryKey;
-      const period_from = isoOffsetHours(-12);
-      const period_to = isoOffsetHours(36);
+      const now = Date.now();
+      const period_from = subHours(now, 1).toISOString();
+      const period_to = addDays(now, 2).toISOString();
       const url = `https://api.octopus.energy/v1/products/${encodeURIComponent(
         p,
       )}/electricity-tariffs/${encodeURIComponent(
