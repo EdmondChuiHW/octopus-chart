@@ -3,16 +3,15 @@ import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
-import { getLocalDateKey } from '../lib/dateUtils';
-import { buildBarChartData, type BarDatum } from '../lib/barUtils';
-import type { PricePoint } from '../lib/types';
+import { buildPointsData, type Point } from '../lib/pointUtils';
 import type {
   ChartOptions,
   ChartData,
   ChartDataset,
   TooltipItem,
 } from 'chart.js';
-import { MS, LOCALES, TIMEZONES, TIMINGS } from '../lib/constants';
+import { TIMINGS } from '../lib/constants';
+import { addDays } from 'date-fns';
 
 const DEFAULT_PRODUCT = 'AGILE-24-10-01';
 const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
@@ -26,63 +25,40 @@ export default function OctopusChart() {
     error,
   } = useOctopusPrices(product, tariff);
 
-  const [nowMs, setNowMs] = useState<number>(Date.now());
-  useEffect(() => {
-    const id = setInterval(
-      () => setNowMs(Date.now()),
-      TIMINGS.NOW_UPDATE_INTERVAL,
-    );
-    return () => clearInterval(id);
-  }, []);
+  const nowMs = useNowMs();
+  const todayKey = nowMs;
+  const tomorrowKey = addDays(nowMs, 1).getTime();
 
-  const { dataPoints } = useMemo(
-    () => buildBarChartData(points, nowMs),
+  const dataPoints = useMemo(
+    () => buildPointsData(points, nowMs),
     [points, nowMs],
   );
 
-  const labels = useMemo(() => dataPoints.map((d) => d.label), [dataPoints]);
-
-  const data = useMemo((): ChartData<'bar', BarDatum[], string> => {
-    const dataset: ChartDataset<'bar', BarDatum[]> = {
+  const data = useMemo<ChartData<'bar', Point[], string>>(() => {
+    const dataset: ChartDataset<'bar', Point[]> = {
       label: 'p/kWh (inc VAT)',
       data: dataPoints,
       // supply per-datum colors as arrays derived from dataPoints
-      backgroundColor: dataPoints.map((d) => d.backgroundColor),
-      borderColor: dataPoints.map((d) => d.borderColor),
-      borderWidth: 1,
+      backgroundColor: (ctx) => {
+        return dataPoints.at(ctx.dataIndex)?.backgroundColor;
+      },
+      borderColor: (ctx) => {
+        return dataPoints.at(ctx.dataIndex)?.borderColor;
+      },
+      borderWidth: (ctx) => {
+        return !!dataPoints.at(ctx.dataIndex)?.borderColor ? 2 : undefined;
+      },
+      borderRadius: 12,
     };
-    return { labels, datasets: [dataset] };
-  }, [labels, dataPoints]);
-
-  const todayKey = new Date(nowMs).toLocaleDateString(LOCALES.EN_GB, {
-    timeZone: TIMEZONES.LONDON,
-  });
-  const tomorrowKey = new Date(nowMs + MS.PER_DAY).toLocaleDateString(
-    LOCALES.EN_GB,
-    { timeZone: TIMEZONES.LONDON },
-  );
-
-  const dayMap = useMemo(() => {
-    const map = new Map<string, PricePoint[]>();
-    for (const p of points) {
-      const k = getLocalDateKey(p.valid_from);
-      const arr = map.get(k);
-      if (arr) arr.push(p);
-      else map.set(k, [p]);
-    }
-    return map;
-  }, [points]);
-
-  const segmentsForDay = (key: string) =>
-    (dayMap.get(key) || [])
-      .slice()
-      .sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
+    return { labels: dataPoints.map((d) => d.label), datasets: [dataset] };
+  }, [dataPoints]);
 
   const options: ChartOptions<'bar'> = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
+      normalized: true,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -91,7 +67,7 @@ export default function OctopusChart() {
             title: (items: TooltipItem<'bar'>[]) => items[0]?.label ?? '',
             label: (ctx: TooltipItem<'bar'>) => {
               const v = ctx.parsed.y;
-              return v == null ? 'No data' : `${v} p/kWh (inc VAT)`;
+              return v == null ? 'No data' : `${v} p/kWh`;
             },
           },
           bodyFont: { size: 16 },
@@ -206,30 +182,30 @@ export default function OctopusChart() {
       <div className="clocks-row">
         <RateClock
           dateKey={todayKey}
-          startHour={0}
+          startHourOfDay={0}
           title="Today AM"
-          segments={segmentsForDay(todayKey)}
+          points={dataPoints}
           nowMs={nowMs}
         />
         <RateClock
           dateKey={todayKey}
-          startHour={12}
+          startHourOfDay={12}
           title="Today PM"
-          segments={segmentsForDay(todayKey)}
+          points={dataPoints}
           nowMs={nowMs}
         />
         <RateClock
           dateKey={tomorrowKey}
-          startHour={0}
+          startHourOfDay={0}
           title="Tomorrow AM"
-          segments={segmentsForDay(tomorrowKey)}
+          points={dataPoints}
           nowMs={nowMs}
         />
         <RateClock
           dateKey={tomorrowKey}
-          startHour={12}
+          startHourOfDay={12}
           title="Tomorrow PM"
-          segments={segmentsForDay(tomorrowKey)}
+          points={dataPoints}
           nowMs={nowMs}
         />
       </div>
@@ -241,4 +217,17 @@ export default function OctopusChart() {
       </div>
     </>
   );
+}
+
+function useNowMs(): number {
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+  useEffect(() => {
+    const id = setInterval(
+      () => setNowMs(Date.now()),
+      TIMINGS.NOW_UPDATE_INTERVAL,
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  return nowMs;
 }

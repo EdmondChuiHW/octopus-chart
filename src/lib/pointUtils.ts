@@ -1,9 +1,12 @@
 import type { PricePoint } from './types';
 import { formatTimeLocal } from './dateUtils';
-import { rateToColor } from './colors';
-import { COLORS } from './constants';
+import {
+  getBackgroundColorForPoint,
+  getBorderColorForPoint,
+  getPointStatus,
+} from './colors';
 
-export type BarDatum = {
+export type Point = {
   // x is the start timestamp (ms) used by the timeseries scale
   x: number;
   // y is the numeric value (p/kWh inc VAT)
@@ -14,12 +17,8 @@ export type BarDatum = {
   // human readable label for tooltips and accessibility
   label: string;
   // per-datum drawing styles
-  backgroundColor?: string;
-  borderColor?: string;
-};
-
-export type BarChartData = {
-  dataPoints: BarDatum[];
+  backgroundColor: string;
+  borderColor: string | undefined;
 };
 
 /**
@@ -27,14 +26,11 @@ export type BarChartData = {
  * - labels: human readable range per bar
  * - dataPoints: array of per-bar objects containing x/y, label and styling
  */
-export function buildBarChartData(
-  points: PricePoint[],
-  nowMs: number,
-): BarChartData {
-  const dataPoints: BarDatum[] = [];
+export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
+  const dataPoints: Point[] = [];
 
   if (!points || points.length === 0) {
-    return { dataPoints };
+    return dataPoints;
   }
 
   // compute values for min/max colouring using incVatValue to be robust
@@ -52,33 +48,22 @@ export function buildBarChartData(
     // label is stored on each datum; we no longer push to a separate labels array
 
     const v = p.value_inc_vat;
-    const datum: BarDatum = {
+
+    const status = getPointStatus(nowMs, start, end, v);
+    const backgroundColor = getBackgroundColorForPoint(status, v, min, max);
+    const borderColor = getBorderColorForPoint(status, v, min, max);
+
+    const datum: Point = {
       x: start,
       y: v,
       startMs: start,
       endMs: end,
       label,
-      backgroundColor: undefined,
-      borderColor: undefined,
+      backgroundColor,
+      borderColor,
     };
-
-    // active if now is within [start, end)
-    let color: string;
-    if (nowMs >= start && nowMs < end) {
-      color = COLORS.PRIMARY_BLUE;
-    } else if (nowMs >= end) {
-      // past
-      color = COLORS.PRIMARY_BLUE_FADED;
-    } else if (Number.isNaN(v)) {
-      color = COLORS.NO_DATA_BG;
-    } else {
-      color = rateToColor(v, min, max);
-    }
-
-    datum.backgroundColor = color;
-    datum.borderColor = color;
     dataPoints.push(datum);
   }
 
-  return { dataPoints };
+  return dataPoints;
 }

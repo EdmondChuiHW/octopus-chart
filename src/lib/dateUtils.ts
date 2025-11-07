@@ -12,9 +12,3 @@ export function formatTimeLocal(date: Date) {
     hour12: true,
   });
 }
-
-export function getLocalDateKey(date: Date) {
-  return date.toLocaleDateString(LOCALES.EN_GB, {
-    timeZone: TIMEZONES.LONDON,
-  });
-}

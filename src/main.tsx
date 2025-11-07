@@ -11,9 +11,9 @@ import {
   Title,
   Legend,
 } from 'chart.js';
-import { MyScale } from './components/MyScale.ts';
+import { MyBarScale } from './components/MyScale.ts';
 
-ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyScale);
+ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyBarScale);
 
 const queryClient = new QueryClient();
 

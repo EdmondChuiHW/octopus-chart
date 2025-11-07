@@ -1,8 +1,11 @@
-import type { PricePoint } from '../lib/types';
 // constants used by the plugin are imported where needed inside the plugin file
 import { useMemo } from 'react';
-import { buildRateClockData } from '../lib/rateUtils';
-import type { ChartData, ChartOptions, TooltipItem } from 'chart.js';
+import type {
+  ChartData,
+  ChartDataset,
+  ChartOptions,
+  TooltipItem,
+} from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
 import {
@@ -14,6 +17,8 @@ import {
   Legend,
 } from 'chart.js';
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
+import type { Point } from '../lib/pointUtils';
+import { addMinutes, setHours, startOfDay } from 'date-fns';
 
 ChartJS.register(
   PolarAreaController,
@@ -24,83 +29,99 @@ ChartJS.register(
 );
 
 type Props = {
-  dateKey: string;
-  startHour: number;
+  dateKey: Date | number | string;
+  startHourOfDay: number;
   title: string;
-  segments: PricePoint[];
+  points: Point[];
   nowMs: number;
 };
 
 export default function RateClock({
   dateKey,
-  startHour,
+  startHourOfDay,
   title,
-  segments,
-  nowMs,
+  points: allPoints,
 }: Props) {
-  const { labels, dataValues, backgroundColor, borderColor, borderWidth } =
-    useMemo(
-      () => buildRateClockData(segments, dateKey, startHour, nowMs),
-      [segments, dateKey, startHour, nowMs],
-    );
+  const points: (Point | undefined)[] = useMemo(() => {
+    const start = setHours(startOfDay(dateKey), startHourOfDay);
+    const pointMap = new Map(allPoints.map((p) => [p.startMs, p]));
+    const out: (Point | undefined)[] = [];
+    for (let i = 0; i < 24; i++) {
+      const key = addMinutes(start, i * 30).getTime();
+      if (pointMap.has(key)) {
+        out.push(pointMap.get(key)!);
+      } else {
+        out.push(undefined);
+      }
+    }
 
-  const data: ChartData<'polarArea', number[], string> = {
-    labels,
-    datasets: [
-      {
-        data: dataValues,
-        backgroundColor,
-        borderColor,
-        borderWidth,
+    return out;
+  }, [allPoints, dateKey, startHourOfDay]);
+
+  const data = useMemo<
+    ChartData<'polarArea', (number | undefined)[], string | undefined>
+  >(() => {
+    const dataset: ChartDataset<'polarArea', (number | undefined)[]> = {
+      label: 'p/kWh (inc VAT)',
+      data: points.map((p) => p?.y ?? 0),
+      backgroundColor: (ctx) => {
+        return points.at(ctx.dataIndex)?.backgroundColor;
       },
-    ],
-  };
-
-  // plugin created via separate factory in ./chartPlugins/hourLabelsPlugin
-
-  const options: ChartOptions<'polarArea'> = {
-    maintainAspectRatio: false,
-    layout: {
-      padding: 8,
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        enabled: true,
-        callbacks: {
-          title: (items: TooltipItem<'polarArea'>[]) => items[0]?.label ?? '',
-          label: (ctx: TooltipItem<'polarArea'>) => {
-            const v = ctx.parsed.r;
-            return v == null ? 'No data' : `${v} p/kWh (inc VAT)`;
-          },
-        },
-        bodyFont: { size: 16 },
-        titleFont: { size: 14 },
+      borderColor: (ctx) => {
+        return points.at(ctx.dataIndex)?.borderColor ?? 'rgba(0,0,0,0.9)';
       },
-    },
-    scales: {
-      r: {
-        ticks: { display: false, count: 2 },
-        grid: {
-          color: 'rgba(255,255,255,0.6)',
-          lineWidth: 4,
-        },
+      borderWidth: (ctx) => {
+        return !!points.at(ctx.dataIndex)?.borderColor ? 4 : 1;
       },
-    },
-  };
+      borderRadius: 4,
+      borderAlign: 'inner',
+    };
+    return { labels: points.map((d) => d?.label), datasets: [dataset] };
+  }, [points]);
 
-  // container sizing moved to CSS (.chart-container)
+  const plugins = useMemo(
+    () => [hourLabelsPluginFactory(startHourOfDay)],
+    [startHourOfDay],
+  );
 
   return (
-    <div className="rate-clock" key={`${dateKey}-${startHour}`}>
+    <div className="rate-clock">
       <div className="clock-title">{title}</div>
+      {points.length}
       <div className="chart-container">
-        <PolarArea
-          data={data}
-          options={options}
-          plugins={[hourLabelsPluginFactory(startHour)]}
-        />
+        <PolarArea data={data} options={options} plugins={plugins} />
       </div>
     </div>
   );
 }
+
+const options: ChartOptions<'polarArea'> = {
+  maintainAspectRatio: false,
+  layout: {
+    padding: 8,
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      enabled: true,
+      callbacks: {
+        title: (items: TooltipItem<'polarArea'>[]) => items[0]?.label ?? '',
+        label: (ctx: TooltipItem<'polarArea'>) => {
+          const v = ctx.parsed.r;
+          return v == null ? 'No data' : `${v} p/kWh`;
+        },
+      },
+      bodyFont: { size: 16 },
+      titleFont: { size: 14 },
+    },
+  },
+  scales: {
+    r: {
+      ticks: { display: false, count: 2 },
+      grid: {
+        color: 'rgba(255,255,255,0.6)',
+        lineWidth: 4,
+      },
+    },
+  },
+};
