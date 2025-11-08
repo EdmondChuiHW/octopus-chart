@@ -27,7 +27,6 @@ ChartJS.register(
 type Props = {
   dateKey: Date | number | string;
   startHourOfDay: number;
-  title: string;
   points: Point[];
   nowMs: number;
 };
@@ -35,7 +34,6 @@ type Props = {
 export default function RateClock({
   dateKey,
   startHourOfDay,
-  title,
   points: allPoints,
 }: Props) {
   const points: (Point | undefined)[] = useMemo(() => {
@@ -82,7 +80,9 @@ export default function RateClock({
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(
     () => ({
       ...options,
-      onHover(_ev, elements) {
+      onHover(ev, elements) {
+        ev.native?.preventDefault();
+        ev.native?.stopImmediatePropagation();
         const index = elements.at(0)?.index;
         setHovered(index ?? -1);
       },
@@ -92,9 +92,13 @@ export default function RateClock({
 
   return (
     <div className="rate-clock">
-      <div className="clock-title">{title}</div>
       <div className="chart-container">
-        <PolarArea data={data} options={optionsWithHover} plugins={plugins} />
+        <PolarArea
+          data={data}
+          options={optionsWithHover}
+          plugins={plugins}
+          style={{ touchAction: 'pinch-zoom' }}
+        />
       </div>
       <HoverDisplay points={points} activeIndex={hovered} />
     </div>
