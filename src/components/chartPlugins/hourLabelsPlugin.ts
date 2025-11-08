@@ -17,10 +17,7 @@ export function hourLabelsPluginFactory(
       const scale = chart.scales.r;
       if (!(scale instanceof RadialLinearScale)) return;
 
-      console.log('scale.drawingArea', scale.drawingArea);
-      const rOuter = scale.drawingArea
-        ? scale.drawingArea
-        : Math.min(width, height) / 2 - CLOCK_LAYOUT.SCALE_FALLBACK_PADDING;
+      const rOuter = scale.drawingArea;
 
       // TODO read from resolved scale grid lineWidth option
       const rTickOuter = rOuter - CLOCK_LAYOUT.R_TICK_OUTER_DELTA;
