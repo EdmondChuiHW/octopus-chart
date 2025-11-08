@@ -1,5 +1,5 @@
 // constants used by the plugin are imported where needed inside the plugin file
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, type Ref } from 'react';
 import type { ChartData, ChartDataset, ChartOptions } from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
@@ -99,6 +99,8 @@ export default function RateClock({
     return options;
   }, [allPoints]);
 
+  const [fullyVisibleRef, isFullyVisible] = useFullyVisible<HTMLDivElement>();
+
   const amPmLabel = startHourOfDay < 12 ? 'AM' : 'PM';
 
   if (count === 0) {
@@ -112,13 +114,17 @@ export default function RateClock({
           data={data}
           options={optionsWithHover}
           plugins={plugins}
-          style={style}
+          style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
         />
         <div className="am-pm-label">
           <div className="label">{amPmLabel}</div>
         </div>
       </div>
-      <HoverDisplay points={points} activeIndex={hovered} />
+      <HoverDisplay
+        points={points}
+        activeIndex={hovered}
+        ref={fullyVisibleRef}
+      />
     </div>
   );
 }
@@ -126,9 +132,11 @@ export default function RateClock({
 function HoverDisplay({
   points,
   activeIndex,
+  ref,
 }: {
   points: (PricePoint | undefined)[];
   activeIndex?: number;
+  ref?: Ref<HTMLDivElement>;
 }) {
   const index = useMemo(() => {
     if (activeIndex != null) return activeIndex;
@@ -141,7 +149,7 @@ function HoverDisplay({
   return (
     <>
       <b>{point?.label ?? '–'}</b>
-      <div>{point?.y ?? '–'}p/kWh</div>
+      <div ref={ref}>{point?.y ?? '–'}p/kWh</div>
     </>
   );
 }
@@ -172,6 +180,38 @@ const OPTIONS = {
   },
 } satisfies NoComponentOptions;
 
-const style: React.CSSProperties = {
-  touchAction: 'pinch-zoom',
-};
+function useFullyVisible<E extends HTMLElement>(): readonly [Ref<E>, boolean] {
+  const [isFullyVisible, setIsFullyVisible] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const ref: Ref<E> = useCallback((e: E | null) => {
+    if (e == null) {
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+      return;
+    }
+
+    const callback: IntersectionObserverCallback = (entries) => {
+      const entry = pickLastEntry(entries);
+      if (!entry) return;
+
+      setIsFullyVisible(entry.isIntersecting);
+    };
+    const options: IntersectionObserverInit = {
+      threshold: 1.0,
+    };
+    observerRef.current = new IntersectionObserver(callback, options);
+    observerRef.current.observe(e);
+  }, []);
+
+  return [ref, isFullyVisible] as const;
+}
+
+function pickLastEntry(entries: IntersectionObserverEntry[]) {
+  let lastEntry: IntersectionObserverEntry | null = null;
+  for (const entry of entries) {
+    if (lastEntry == null || entry.time > lastEntry.time) {
+      lastEntry = entry;
+    }
+  }
+  return lastEntry;
+}
