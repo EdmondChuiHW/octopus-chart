@@ -36,17 +36,21 @@ export default function RateClock({
   startHourOfDay,
   points: allPoints,
 }: Props) {
-  const points: (PricePoint | undefined)[] = useMemo(() => {
+  const [points, count] = useMemo(() => {
     const start = setHours(startOfDay(dateKey), startHourOfDay);
     const pointMap = new Map(allPoints.map((p) => [p.startMs, p]));
     const out: (PricePoint | undefined)[] = [];
+    let count = 0;
     for (let i = 0; i < 24; i++) {
       const key = addMinutes(start, i * 30).getTime();
-      // pushing undefined is also intended
-      out.push(pointMap.get(key));
+      const val = pointMap.get(key);
+      out.push(val);
+      if (val != null) {
+        count++;
+      }
     }
 
-    return out;
+    return [out, count] as const;
   }, [allPoints, dateKey, startHourOfDay]);
 
   const data = useMemo<
@@ -95,6 +99,12 @@ export default function RateClock({
     return options;
   }, [allPoints]);
 
+  const amPmLabel = startHourOfDay < 12 ? 'AM' : 'PM';
+
+  if (count === 0) {
+    return <b className="rate-clock">No data for {amPmLabel}</b>;
+  }
+
   return (
     <div className="rate-clock">
       <div className="chart-container">
@@ -105,7 +115,7 @@ export default function RateClock({
           style={style}
         />
         <div className="am-pm-label">
-          <div className="label">{startHourOfDay < 12 ? 'AM' : 'PM'}</div>
+          <div className="label">{amPmLabel}</div>
         </div>
       </div>
       <HoverDisplay points={points} activeIndex={hovered} />
@@ -147,6 +157,9 @@ const OPTIONS = {
   plugins: {
     legend: { display: false },
     tooltip: { enabled: false },
+  },
+  hover: {
+    intersect: false,
   },
   scales: {
     r: {

@@ -55,6 +55,8 @@
   background: rgba(255, 255, 255, 0.02);
   padding: 1rem;
   margin-top: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
 .clocks-group > .clocks-group-title {
   margin: 0.5rem 0 0.3rem 0;
@@ -70,18 +72,20 @@
   justify-content: space-evenly;
   flex-wrap: wrap;
 }
+
 .rate-clock {
+  margin-top: 0.3rem;
   padding: 0.6rem;
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  justify-items: center;
-  align-items: center;
+  place-items: center;
+  place-content: center;
   /* responsive flex: prefer 240px basis, but allow shrink/grow to fit row */
   flex: 1 1 240px;
   max-width: 300px;
   box-sizing: border-box;
   text-align: center;
+  vertical-align: middle;
 }
 .rate-clock svg {
   display: block;
