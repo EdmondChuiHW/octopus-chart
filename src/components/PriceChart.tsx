@@ -7,17 +7,17 @@ import type {
   Chart,
   TooltipItem,
 } from 'chart.js';
-import type { Point } from '../lib/pointUtils';
+import type { PricePoint } from '../lib/pointUtils';
 import { useMemo } from 'react';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
 
 type Props = {
-  points: Point[];
+  points: PricePoint[];
 };
 
 export default function PriceChart({ points }: Props) {
-  const data = useMemo<ChartData<'bar', Point[], string>>(() => {
-    const dataset: ChartDataset<'bar', Point[]> = {
+  const data = useMemo<ChartData<'bar', PricePoint[], string>>(() => {
+    const dataset: ChartDataset<'bar', PricePoint[]> = {
       label: 'p/kWh (inc VAT)',
       data: points,
       borderRadius: 12,
@@ -37,8 +37,8 @@ export default function PriceChart({ points }: Props) {
   return <Bar options={options} data={data} plugins={plugins} style={style} />;
 }
 
-function getPoints({ chart }: { chart: Chart }): Point[] {
-  return chart.data.datasets[0].data as Point[];
+function getPoints({ chart }: { chart: Chart }): PricePoint[] {
+  return chart.data.datasets[0].data as PricePoint[];
 }
 
 const plugins: Plugin[] = [axisTickPluginFactory()];

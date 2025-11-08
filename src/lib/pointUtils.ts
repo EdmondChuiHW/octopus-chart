@@ -1,4 +1,4 @@
-import type { PricePoint } from './types';
+import type { ApiPricePoint } from './types';
 import { formatTimeLocal } from './dateUtils';
 import {
   getBackgroundColorForPoint,
@@ -8,7 +8,7 @@ import {
 
 export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
 
-export type Point = {
+export type PricePoint = {
   // x is the start timestamp (ms) used by the timeseries scale
   x: number;
   // y is the numeric value (p/kWh inc VAT)
@@ -27,8 +27,11 @@ export type Point = {
  * - labels: human readable range per bar
  * - dataPoints: array of per-bar objects containing x/y, label and styling
  */
-export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
-  const dataPoints: Point[] = [];
+export function buildPointsData(
+  points: ApiPricePoint[],
+  nowMs: number,
+): PricePoint[] {
+  const dataPoints: PricePoint[] = [];
 
   if (points.length === 0) {
     return dataPoints;
@@ -54,7 +57,7 @@ export function buildPointsData(points: PricePoint[], nowMs: number): Point[] {
     const backgroundColor = getBackgroundColorForPoint(status, v, min, max);
     const borderColor = getBorderColorForPoint(status, v, min, max);
 
-    const datum: Point = {
+    const datum: PricePoint = {
       x: start,
       y: v,
       startMs: start,

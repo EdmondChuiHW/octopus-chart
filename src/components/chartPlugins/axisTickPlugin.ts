@@ -1,5 +1,5 @@
 import type { Chart, Plugin, ChartDataset } from 'chart.js';
-import type { Point } from '../../lib/pointUtils';
+import type { PricePoint } from '../../lib/pointUtils';
 import { getMinutes } from 'date-fns';
 
 export function axisTickPluginFactory(): Plugin<'bar'> {
@@ -11,7 +11,7 @@ export function axisTickPluginFactory(): Plugin<'bar'> {
       const ctx = chart.ctx;
       ctx.save();
 
-      type ExtDs = ChartDataset<'bar', Point[]>;
+      type ExtDs = ChartDataset<'bar', PricePoint[]>;
       const points = (chart.data.datasets as ExtDs[])[0].data;
 
       for (let tickIndex = 0; tickIndex < xScale.ticks.length; tickIndex++) {

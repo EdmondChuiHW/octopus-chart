@@ -12,7 +12,7 @@ import {
   Legend,
 } from 'chart.js';
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
-import type { Point } from '../lib/pointUtils';
+import type { PricePoint } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
 
@@ -27,7 +27,7 @@ ChartJS.register(
 type Props = {
   dateKey: Date | number | string;
   startHourOfDay: number;
-  points: Point[];
+  points: PricePoint[];
   nowMs: number;
 };
 
@@ -36,10 +36,10 @@ export default function RateClock({
   startHourOfDay,
   points: allPoints,
 }: Props) {
-  const points: (Point | undefined)[] = useMemo(() => {
+  const points: (PricePoint | undefined)[] = useMemo(() => {
     const start = setHours(startOfDay(dateKey), startHourOfDay);
     const pointMap = new Map(allPoints.map((p) => [p.startMs, p]));
-    const out: (Point | undefined)[] = [];
+    const out: (PricePoint | undefined)[] = [];
     for (let i = 0; i < 24; i++) {
       const key = addMinutes(start, i * 30).getTime();
       // pushing undefined is also intended
@@ -114,7 +114,7 @@ function HoverDisplay({
   points,
   activeIndex,
 }: {
-  points: (Point | undefined)[];
+  points: (PricePoint | undefined)[];
   activeIndex?: number;
 }) {
   const index = useMemo(() => {

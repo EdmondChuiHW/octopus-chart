@@ -1,14 +1,19 @@
 import { useQuery, type QueryFunctionContext } from '@tanstack/react-query';
 import { ResponseSchema } from '../lib/types';
-import type { PricePoint } from '../lib/types';
+import type { ApiPricePoint } from '../lib/types';
 import { addDays, subHours } from 'date-fns';
 
 export function useOctopusPrices(product: string, tariff: string) {
-  return useQuery<PricePoint[], Error, PricePoint[], [string, string, string]>({
+  return useQuery<
+    ApiPricePoint[],
+    Error,
+    ApiPricePoint[],
+    [string, string, string]
+  >({
     queryKey: ['prices', product, tariff],
     queryFn: async (
       ctx: QueryFunctionContext<[string, string, string]>,
-    ): Promise<PricePoint[]> => {
+    ): Promise<ApiPricePoint[]> => {
       const [, p, t] = ctx.queryKey;
       const now = Date.now();
       const period_from = subHours(now, 1).toISOString();
