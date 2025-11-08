@@ -1,11 +1,6 @@
 // constants used by the plugin are imported where needed inside the plugin file
-import { useMemo } from 'react';
-import type {
-  ChartData,
-  ChartDataset,
-  ChartOptions,
-  TooltipItem,
-} from 'chart.js';
+import { useMemo, useState } from 'react';
+import type { ChartData, ChartDataset, ChartOptions } from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
 import {
@@ -82,14 +77,54 @@ export default function RateClock({
     [startHourOfDay],
   );
 
+  const [hovered, setHovered] = useState<number>(-1);
+
+  const optionsWithHover: ChartOptions<'polarArea'> = useMemo(
+    () => ({
+      ...options,
+      onHover(_ev, elements) {
+        const index = elements.at(0)?.index;
+        setHovered(index ?? -1);
+      },
+    }),
+    [],
+  );
+
   return (
     <div className="rate-clock">
       <div className="clock-title">{title}</div>
-      {points.length}
       <div className="chart-container">
-        <PolarArea data={data} options={options} plugins={plugins} />
+        <PolarArea data={data} options={optionsWithHover} plugins={plugins} />
       </div>
+      <HoverDisplay points={points} activeIndex={hovered} />
     </div>
+  );
+}
+
+function HoverDisplay({
+  points,
+  activeIndex,
+}: {
+  points: (Point | undefined)[];
+  activeIndex?: number;
+}) {
+  const index = useMemo(() => {
+    if (activeIndex != null) return activeIndex;
+
+    return points.findIndex((p) => p?.status === 'active');
+  }, [points, activeIndex]);
+
+  const point = useMemo(() => points.at(index), [points, index]);
+
+  return <PointDisplay point={point} />;
+}
+
+function PointDisplay({ point }: { point: Point | undefined }) {
+  return (
+    <>
+      <b>{point?.label ?? '–'}</b>
+      <div>{point?.y ?? '–'}p/kWh</div>
+    </>
   );
 }
 
@@ -100,16 +135,7 @@ const options: ChartOptions<'polarArea'> = {
   },
   plugins: {
     legend: { display: false },
-    tooltip: {
-      enabled: true,
-      callbacks: {
-        label: (ctx: TooltipItem<'polarArea'>) => {
-          return `${ctx.parsed.r}p/kWh`;
-        },
-      },
-      bodyFont: { size: 16 },
-      titleFont: { size: 14 },
-    },
+    tooltip: { enabled: false },
   },
   scales: {
     r: {

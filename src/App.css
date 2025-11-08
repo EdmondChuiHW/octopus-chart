@@ -115,8 +115,3 @@
   text-align: center;
   font-size: clamp(0.9rem, 1.8vw, 1.05rem);
 }
-
-/* Responsive SVG hour label sizing without media queries */
-.hour-labels text {
-  font-size: clamp(14px, 2.4vw, 18px) !important;
-}
