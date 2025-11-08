@@ -77,23 +77,23 @@ export default function RateClock({
 
   const [hovered, setHovered] = useState<number>(-1);
 
-  const optionsWithHover: ChartOptions<'polarArea'> = useMemo(
-    () => ({
-      ...options,
-      scales: {
-        ...options.scales,
-        r: {
-          ...options.scales?.r,
-          suggestedMax: Math.max(...allPoints.map((p) => p.y)) * 1.1,
-        },
-      },
-      onHover(_ev, elements) {
-        const index = elements.at(0)?.index;
-        setHovered(index ?? -1);
-      },
-    }),
-    [allPoints],
-  );
+  const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
+    const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
+    options.onHover = (_ev, elements) => {
+      const index = elements.at(0)?.index;
+      setHovered(index ?? -1);
+    };
+
+    const suggestedMax = Math.max(...allPoints.map((p) => p.y)) * 1;
+
+    // Static type for OPTIONS has scales.r but not suggestedMax.
+    // But ChartOptions<'polarArea'> 'scales' and 'r' are optional.
+    // Thanks TypeScript lol
+    options.scales ??= {};
+    options.scales.r ??= {};
+    options.scales.r.suggestedMax ??= suggestedMax;
+    return options;
+  }, [allPoints]);
 
   return (
     <div className="rate-clock">
@@ -102,7 +102,7 @@ export default function RateClock({
           data={data}
           options={optionsWithHover}
           plugins={plugins}
-          style={{ touchAction: 'pinch-zoom' }}
+          style={style}
         />
       </div>
       <HoverDisplay points={points} activeIndex={hovered} />
@@ -125,10 +125,6 @@ function HoverDisplay({
 
   const point = useMemo(() => points.at(index), [points, index]);
 
-  return <PointDisplay point={point} />;
-}
-
-function PointDisplay({ point }: { point: Point | undefined }) {
   return (
     <>
       <b>{point?.label ?? '–'}</b>
@@ -137,7 +133,10 @@ function PointDisplay({ point }: { point: Point | undefined }) {
   );
 }
 
-const options: ChartOptions<'polarArea'> = {
+// can't go futher with `scales.r.suggestedMax` without a mess
+type NoComponentOptions = Omit<ChartOptions<'polarArea'>, 'onHover'>;
+
+const OPTIONS = {
   maintainAspectRatio: false,
   layout: {
     padding: 8,
@@ -155,4 +154,8 @@ const options: ChartOptions<'polarArea'> = {
       },
     },
   },
+} satisfies NoComponentOptions;
+
+const style: React.CSSProperties = {
+  touchAction: 'pinch-zoom',
 };

@@ -34,14 +34,7 @@ export default function PriceChart({ points }: Props) {
     return { labels: points.map((d) => d.label), datasets: [dataset] };
   }, [points]);
 
-  return (
-    <Bar
-      options={options}
-      data={data}
-      plugins={plugins}
-      style={{ touchAction: 'pinch-zoom' }}
-    />
-  );
+  return <Bar options={options} data={data} plugins={plugins} style={style} />;
 }
 
 function getPoints({ chart }: { chart: Chart }): Point[] {
@@ -114,4 +107,8 @@ const options: ChartOptions<'bar'> = {
       grid: { color: 'rgba(255,255,255,0.08)' },
     },
   },
+};
+
+const style: React.CSSProperties = {
+  touchAction: 'pinch-zoom',
 };
