@@ -1,5 +1,13 @@
 // constants used by the plugin are imported where needed inside the plugin file
-import { useCallback, useMemo, useRef, useState, type Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+  type RefCallback,
+} from 'react';
 import type { ChartData, ChartDataset, ChartOptions } from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
@@ -62,12 +70,10 @@ export default function RateClock({
       backgroundColor: (ctx) => {
         return points.at(ctx.dataIndex)?.backgroundColor;
       },
-      borderColor: (ctx) => {
-        return points.at(ctx.dataIndex)?.borderColor ?? 'rgba(0,0,0,0.9)';
-      },
-      borderWidth: (ctx) => {
-        return points.at(ctx.dataIndex)?.borderColor != null ? 4 : 1;
-      },
+      borderColor: 'rgba(0,0,0,0.9)',
+      borderWidth: 1,
+      hoverBorderColor: 'rgba(0,120,212,0.95)',
+      hoverBorderWidth: 4,
       borderRadius: 4,
       borderAlign: 'inner',
     };
@@ -79,13 +85,14 @@ export default function RateClock({
     [startHourOfDay],
   );
 
-  const [hovered, setHovered] = useState<number>(-1);
+  const defaultActiveIndex = useMemo(() => findActiveIndex(points), [points]);
+  const [activeIndex, setActiveIndex] = useState<number>(defaultActiveIndex);
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
     const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
     options.onHover = (_ev, elements) => {
       const index = elements.at(0)?.index;
-      setHovered(index ?? -1);
+      setActiveIndex(index ?? defaultActiveIndex);
     };
 
     const suggestedMax = Math.max(...allPoints.map((p) => p.y)) * 1;
@@ -97,7 +104,23 @@ export default function RateClock({
     options.scales.r ??= {};
     options.scales.r.suggestedMax ??= suggestedMax;
     return options;
-  }, [allPoints]);
+  }, [allPoints, defaultActiveIndex]);
+
+  const chartRefRef = useRef<
+    ChartJS<'polarArea', (number | undefined)[]> | undefined | null
+  >(null);
+  const chartRef: RefCallback<
+    ChartJS<'polarArea', (number | undefined)[]> | undefined | null
+  > = useCallback(
+    (chart) => {
+      chartRefRef.current = chart;
+      setChartActiveIndex(chart, activeIndex);
+    },
+    [activeIndex],
+  );
+  useEffect(() => {
+    setChartActiveIndex(chartRefRef.current, activeIndex);
+  }, [activeIndex]);
 
   const [fullyVisibleRef, isFullyVisible] = useFullyVisible<HTMLDivElement>();
 
@@ -111,6 +134,7 @@ export default function RateClock({
     <div className="rate-clock">
       <div className="chart-container">
         <PolarArea
+          ref={chartRef}
           data={data}
           options={optionsWithHover}
           plugins={plugins}
@@ -122,7 +146,7 @@ export default function RateClock({
       </div>
       <HoverDisplay
         points={points}
-        activeIndex={hovered}
+        activeIndex={activeIndex}
         ref={fullyVisibleRef}
       />
     </div>
@@ -135,16 +159,13 @@ function HoverDisplay({
   ref,
 }: {
   points: (PricePoint | undefined)[];
-  activeIndex?: number;
+  activeIndex: number;
   ref?: Ref<HTMLDivElement>;
 }) {
-  const index = useMemo(() => {
-    if (activeIndex != null) return activeIndex;
-
-    return points.findIndex((p) => p?.status === 'active');
+  const point = useMemo(() => {
+    const index = activeIndex >= 0 ? activeIndex : findActiveIndex(points);
+    return index < 0 ? undefined : points.at(index);
   }, [points, activeIndex]);
-
-  const point = useMemo(() => points.at(index), [points, index]);
 
   return (
     <>
@@ -152,6 +173,23 @@ function HoverDisplay({
       <div ref={ref}>{point?.y ?? '–'}p/kWh</div>
     </>
   );
+}
+
+function findActiveIndex(points: (PricePoint | undefined)[]): number {
+  return points.findIndex((p) => p?.status === 'active');
+}
+
+function setChartActiveIndex(
+  chart: ChartJS<'polarArea', unknown> | undefined | null,
+  index: number,
+) {
+  if (chart == null) return;
+
+  if (index < 0) {
+    chart.setActiveElements([]);
+  } else {
+    chart.setActiveElements([{ datasetIndex: 0, index }]);
+  }
 }
 
 // can't go futher with `scales.r.suggestedMax` without a mess
@@ -167,7 +205,7 @@ const OPTIONS = {
     tooltip: { enabled: false },
   },
   hover: {
-    intersect: false,
+    // intersect: false,
   },
   scales: {
     r: {
