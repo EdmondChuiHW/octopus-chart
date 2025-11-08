@@ -104,6 +104,9 @@ export default function RateClock({
           plugins={plugins}
           style={style}
         />
+        <div className="am-pm-label">
+          <div className="label">{startHourOfDay < 12 ? 'AM' : 'PM'}</div>
+        </div>
       </div>
       <HoverDisplay points={points} activeIndex={hovered} />
     </div>

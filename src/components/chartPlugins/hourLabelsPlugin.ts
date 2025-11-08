@@ -98,11 +98,6 @@ export function hourLabelsPluginFactory(
         ctx.fillText(String(labelVal), lx, ly);
       }
 
-      // center AM/PM label
-      ctx.shadowBlur = 0;
-      ctx.font = `700 ${fontSize}px sans-serif`;
-      const centerAmPm = startHour === 0 ? 'AM' : 'PM';
-      ctx.fillText(centerAmPm, cx, cy);
       ctx.restore();
     },
   };
