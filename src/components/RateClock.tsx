@@ -80,14 +80,19 @@ export default function RateClock({
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(
     () => ({
       ...options,
-      onHover(ev, elements) {
-        ev.native?.preventDefault();
-        ev.native?.stopImmediatePropagation();
+      scales: {
+        ...options.scales,
+        r: {
+          ...options.scales?.r,
+          suggestedMax: Math.max(...allPoints.map((p) => p.y)) * 1.1,
+        },
+      },
+      onHover(_ev, elements) {
         const index = elements.at(0)?.index;
         setHovered(index ?? -1);
       },
     }),
-    [],
+    [allPoints],
   );
 
   return (
