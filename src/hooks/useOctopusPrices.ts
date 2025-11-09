@@ -1,10 +1,13 @@
-import { useQuery, type QueryFunctionContext } from '@tanstack/react-query';
+import {
+  useSuspenseQuery,
+  type QueryFunctionContext,
+} from '@tanstack/react-query';
 import { ResponseSchema } from '../lib/types';
 import type { ApiPricePoint } from '../lib/types';
 import { addDays, subHours } from 'date-fns';
 
 export function useOctopusPrices(product: string, tariff: string) {
-  return useQuery<
+  const result = useSuspenseQuery<
     ApiPricePoint[],
     Error,
     ApiPricePoint[],
@@ -39,9 +42,21 @@ export function useOctopusPrices(product: string, tariff: string) {
       }
 
       const results = parsed.data.results;
+      if (results.length === 0) {
+        throw new Error(
+          'No price data available for the selected tariff / period.',
+        );
+      }
+
       results.sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
       return results;
     },
     refetchOnWindowFocus: false,
   });
+
+  if (result.error && !result.isFetching) {
+    throw result.error;
+  }
+
+  return result;
 }

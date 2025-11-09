@@ -12,11 +12,7 @@ const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
 export default function OctopusCharts() {
   const product = DEFAULT_PRODUCT;
   const tariff = DEFAULT_TARIFF;
-  const {
-    data: apiPoints = [],
-    isLoading,
-    error,
-  } = useOctopusPrices(product, tariff);
+  const { data: apiPoints } = useOctopusPrices(product, tariff);
 
   const nowMs = useNowMs();
   const todayKey = nowMs;
@@ -29,21 +25,7 @@ export default function OctopusCharts() {
 
   return (
     <>
-      {error ? (
-        <div role="alert" className="error">
-          Error: {error instanceof Error ? error.message : String(error)}
-        </div>
-      ) : (
-        <div className="chart-wrap" aria-busy={isLoading}>
-          {points.length === 0 && !isLoading ? (
-            <div className="placeholder">
-              No price data available for the selected tariff / period.
-            </div>
-          ) : (
-            <PriceChart points={points} />
-          )}
-        </div>
-      )}
+      <div className="chart-wrap">{<PriceChart points={points} />}</div>
 
       <div className="clocks-group">
         <h1 className="clocks-group-title">Today</h1>

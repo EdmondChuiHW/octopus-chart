@@ -1,5 +1,8 @@
+import { Suspense } from 'react';
 import './App.css';
 import OctopusCharts from './components/OctopusCharts';
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
 function App() {
   return (
@@ -12,7 +15,32 @@ function App() {
       </header>
 
       <main>
-        <OctopusCharts />
+        <Suspense
+          fallback={
+            <div className="placeholder">
+              Getting prices from Octopus Energy…
+            </div>
+          }
+        >
+          <QueryErrorResetBoundary>
+            {({ reset }) => (
+              <ErrorBoundary
+                onReset={reset}
+                fallbackRender={({ error, resetErrorBoundary }) => (
+                  <>
+                    <div role="alert" className="error">
+                      Error:{' '}
+                      {error instanceof Error ? error.message : String(error)}
+                    </div>
+                    <button onClick={resetErrorBoundary}>Try again</button>
+                  </>
+                )}
+              >
+                <OctopusCharts />
+              </ErrorBoundary>
+            )}
+          </QueryErrorResetBoundary>
+        </Suspense>
       </main>
 
       <footer className="app-footer">
