@@ -18,11 +18,13 @@ import {
   ArcElement,
   Tooltip,
   Legend,
+  Interaction,
 } from 'chart.js';
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
 import type { PricePoint } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
+import { getRelativePosition } from 'chart.js/helpers';
 
 ChartJS.register(
   PolarAreaController,
@@ -44,6 +46,10 @@ export default function RateClock({
   startHourOfDay,
   points: allPoints,
 }: Props) {
+  const allMax = useMemo(
+    () => Math.max(...allPoints.map((p) => p.y)) * 1,
+    [allPoints],
+  );
   const [points, count, activeIndex] = useMemo(() => {
     const start = setHours(startOfDay(dateKey), startHourOfDay);
     const pointMap = new Map(allPoints.map((p) => [p.startMs, p]));
@@ -68,7 +74,7 @@ export default function RateClock({
   const data = useMemo<
     ChartData<'polarArea', (number | undefined)[], string | undefined>
   >(() => {
-    const dataset: ChartDataset<'polarArea', (number | undefined)[]> = {
+    const visibleDataset: ChartDataset<'polarArea', (number | undefined)[]> = {
       label: 'p/kWh (inc VAT)',
       data: points.map((p) => p?.y ?? 0),
       backgroundColor: (ctx) => {
@@ -81,8 +87,20 @@ export default function RateClock({
       borderRadius: 4,
       borderAlign: 'inner',
     };
-    return { labels: points.map((d) => d?.label), datasets: [dataset] };
-  }, [points]);
+
+    const hitDataset: ChartDataset<'polarArea', number[]> = {
+      label: 'hit-area',
+      data: points.map((p) => (p ? allMax : 0)),
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(0,0,0,0)',
+      borderWidth: 0,
+    };
+
+    return {
+      labels: points.map((d) => d?.label),
+      datasets: [visibleDataset, hitDataset],
+    };
+  }, [allMax, points]);
 
   const plugins = useMemo(
     () => [hourLabelsPluginFactory(startHourOfDay)],
@@ -94,21 +112,18 @@ export default function RateClock({
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
     const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
-    options.onHover = (_ev, elements) => {
-      const index = elements.at(0)?.index;
-      setHoverIndex(index ?? -1);
-    };
-
-    const suggestedMax = Math.max(...allPoints.map((p) => p.y)) * 1;
+    // we handle hover with our own onPointerMove
+    // cuz built-in hover resets active elements
+    options.events = [];
 
     // Static type for OPTIONS has scales.r but not suggestedMax.
     // But ChartOptions<'polarArea'> 'scales' and 'r' are optional.
     // Thanks TypeScript lol
     options.scales ??= {};
     options.scales.r ??= {};
-    options.scales.r.suggestedMax ??= suggestedMax;
+    options.scales.r.suggestedMax ??= allMax;
     return options;
-  }, [allPoints]);
+  }, [allMax]);
 
   const [fullyVisibleRef, isFullyVisible] = useFullyVisible<HTMLDivElement>();
 
@@ -127,6 +142,7 @@ export default function RateClock({
           activeIndex={displayedIndex}
           data={data}
           options={optionsWithHover}
+          onHover={setHoverIndex}
           plugins={plugins}
           style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
         />
@@ -145,16 +161,44 @@ export default function RateClock({
 
 function ActiveIndexChart({
   activeIndex,
+  onHover,
   ...chartProps
 }: {
   activeIndex: number;
+  onHover?: (index: number) => void;
 } & ComponentProps<typeof PolarArea<(number | undefined)[]>>) {
   const ref = useRef<ChartJS<'polarArea', (number | undefined)[]> | null>(null);
 
   useEffect(() => {
     setChartActiveIndex(ref.current, activeIndex);
   }, [activeIndex]);
-  return <PolarArea ref={ref} {...chartProps} />;
+
+  return (
+    <PolarArea
+      ref={ref}
+      {...chartProps}
+      onPointerMove={(ev) => {
+        if (ref.current == null) return;
+
+        const chart = ref.current as ChartJS;
+        const pos = getRelativePosition(ev.nativeEvent, chart);
+        let found = -1;
+        Interaction.evaluateInteractionItems(
+          chart,
+          'r',
+          pos,
+          (el, _datasetIndex, index) => {
+            if (el.inRange(pos.x, pos.y)) {
+              found = index;
+            }
+          },
+          true,
+        );
+        onHover?.(found);
+      }}
+      onPointerLeave={() => onHover?.(-1)}
+    />
+  );
 }
 
 function useDelayedActiveIndex(
@@ -213,7 +257,6 @@ function setChartActiveIndex(
 ) {
   if (chart == null) return;
 
-  console.log('setting active index', index);
   if (index < 0) {
     chart.setActiveElements([]);
   } else {
