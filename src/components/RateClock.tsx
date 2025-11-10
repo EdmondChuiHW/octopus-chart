@@ -25,6 +25,7 @@ import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
 import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
 import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
+import { lowestThreeHourArcPluginFactory } from './chartPlugins/lowestThreeHourArcPlugin';
 
 ChartJS.register(
   PolarAreaController,
@@ -108,6 +109,7 @@ export default function RateClock({
 
   const plugins = useMemo(
     () => [
+      lowestThreeHourArcPluginFactory(),
       hourLabelsPluginFactory(startHourOfDay),
       pointerLinePluginFactory(),
       nearestHoverPluginFactory(setHoverIndex),
