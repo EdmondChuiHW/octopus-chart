@@ -3,6 +3,7 @@ import './App.css';
 import OctopusCharts from './components/OctopusCharts';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
+import OctopusChartsPlaceholder from './components/OctopusChartsPlaceholder';
 
 function App() {
   return (
@@ -15,13 +16,7 @@ function App() {
       </header>
 
       <main>
-        <Suspense
-          fallback={
-            <div className="placeholder">
-              Getting prices from Octopus Energy…
-            </div>
-          }
-        >
+        <Suspense fallback={<OctopusChartsPlaceholder />}>
           <QueryErrorResetBoundary>
             {({ reset }) => (
               <ErrorBoundary

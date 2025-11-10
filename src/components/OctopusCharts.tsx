@@ -5,6 +5,7 @@ import RateClock from './RateClock';
 import { buildPointsData } from '../lib/pointUtils';
 import { DEFAULT_PRODUCT, DEFAULT_TARIFF, TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
+import OctopusChartsLayout from './OctopusChartsLayout';
 
 export default function OctopusCharts() {
   const product = DEFAULT_PRODUCT;
@@ -21,12 +22,10 @@ export default function OctopusCharts() {
   );
 
   return (
-    <>
-      <div className="chart-wrap">{<PriceChart points={points} />}</div>
-
-      <div className="clocks-group">
-        <h1 className="clocks-group-title">Today</h1>
-        <div className="clocks-row">
+    <OctopusChartsLayout
+      barChart={<PriceChart points={points} />}
+      todayClocks={
+        <>
           <RateClock
             dateKey={todayKey}
             startHourOfDay={0}
@@ -39,11 +38,10 @@ export default function OctopusCharts() {
             points={points}
             nowMs={nowMs}
           />
-        </div>
-      </div>
-      <div className="clocks-group">
-        <h1 className="clocks-group-title">Tomorrow</h1>
-        <div className="clocks-row">
+        </>
+      }
+      tomorrowClocks={
+        <>
           <RateClock
             dateKey={tomorrowKey}
             startHourOfDay={0}
@@ -56,15 +54,10 @@ export default function OctopusCharts() {
             points={points}
             nowMs={nowMs}
           />
-        </div>
-      </div>
-
-      <div className="note">
-        Tip: slide or hover across bars to see the half-hour range and price.
-        Tomorrow's day-ahead prices may become available after 16:00–20:00 local
-        time.
-      </div>
-    </>
+        </>
+      }
+      note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
+    />
   );
 }
 
