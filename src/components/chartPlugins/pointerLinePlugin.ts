@@ -71,6 +71,10 @@ export function pointerLinePluginFactory(): Plugin<'polarArea'> {
     },
 
     afterDraw: (chart: Chart) => {
+      const state = pointerState.get(chart);
+      const angle = state?.angle;
+      if (angle == null) return;
+
       const ctx = chart.ctx;
       const width = chart.width;
       const height = chart.height;
@@ -84,11 +88,6 @@ export function pointerLinePluginFactory(): Plugin<'polarArea'> {
 
       // length of the minute-style hand (stop a little before the outer ring)
       const rHand = rOuter - Math.max(6, CLOCK_LAYOUT.R_TICK_OUTER_DELTA + 4);
-
-      // read pointer angle stored by pointermove handler; if absent, don't draw
-      const state = pointerState.get(chart);
-      const angle = state?.angle;
-      if (angle == null) return;
 
       const ex = cx + rHand * Math.cos(angle);
       const ey = cy + rHand * Math.sin(angle);

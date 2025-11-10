@@ -18,14 +18,13 @@ import {
   ArcElement,
   Tooltip,
   Legend,
-  Interaction,
 } from 'chart.js';
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
 import type { PricePoint } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
-import { getRelativePosition } from 'chart.js/helpers';
 import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
+import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
 
 ChartJS.register(
   PolarAreaController,
@@ -103,14 +102,18 @@ export default function RateClock({
     };
   }, [allMax, points]);
 
-  const plugins = useMemo(
-    () => [hourLabelsPluginFactory(startHourOfDay), pointerLinePluginFactory()],
-    [startHourOfDay],
-  );
-
   const [isHovering, setIsHovering] = useState(false);
   const [hoverIndex, setHoverIndex] = useState<number>(-1);
   const delayedActiveIndex = useDelayedActiveIndex(activeIndex, isHovering);
+
+  const plugins = useMemo(
+    () => [
+      hourLabelsPluginFactory(startHourOfDay),
+      pointerLinePluginFactory(),
+      nearestHoverPluginFactory(setHoverIndex),
+    ],
+    [startHourOfDay],
+  );
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
     const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
@@ -147,7 +150,6 @@ export default function RateClock({
           displayIndex={displayedIndex}
           data={data}
           options={optionsWithHover}
-          onHoverIndex={setHoverIndex}
           plugins={plugins}
           style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
           onPointerEnter={() => setIsHovering(true)}
@@ -168,11 +170,9 @@ export default function RateClock({
 
 function ActiveIndexChart({
   displayIndex: [activeIndex, chartUpdateMode],
-  onHoverIndex,
   ...chartProps
 }: {
   displayIndex: readonly [number, 'none' | 'default'];
-  onHoverIndex?: (index: number) => void;
 } & ComponentProps<typeof PolarArea<(number | undefined)[]>>) {
   const ref = useRef<ChartJS<'polarArea', (number | undefined)[]> | null>(null);
 
@@ -180,32 +180,7 @@ function ActiveIndexChart({
     setChartActiveIndex(ref.current, activeIndex, chartUpdateMode);
   }, [activeIndex, chartUpdateMode]);
 
-  return (
-    <PolarArea
-      ref={ref}
-      {...chartProps}
-      onPointerMove={(ev) => {
-        if (ref.current == null) return;
-
-        const chart = ref.current as ChartJS;
-        const pos = getRelativePosition(ev.nativeEvent, chart);
-        let found = -1;
-        Interaction.evaluateInteractionItems(
-          chart,
-          'r',
-          pos,
-          (el, _datasetIndex, index) => {
-            if (el.inRange(pos.x, pos.y)) {
-              found = index;
-            }
-          },
-          true,
-        );
-        onHoverIndex?.(found);
-      }}
-      onPointerLeave={() => onHoverIndex?.(-1)}
-    />
-  );
+  return <PolarArea ref={ref} {...chartProps} />;
 }
 
 function useDelayedActiveIndex(
