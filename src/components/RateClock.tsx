@@ -249,10 +249,12 @@ function HoverDisplay({
   }, [points, activeIndex]);
 
   return (
-    <>
-      <b>{point?.label ?? '–'}</b>
-      <div ref={ref}>{point?.y ?? '–'}p/kWh</div>
-    </>
+    <div className="hover-display">
+      <div>{point?.label ?? '–'}</div>
+      <div ref={ref} className="rate">
+        {point?.y ?? '–'}p/kWh
+      </div>
+    </div>
   );
 }
 

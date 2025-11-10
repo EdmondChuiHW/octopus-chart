@@ -9,10 +9,8 @@ function App() {
   return (
     <>
       <header className="app-header">
-        <h1>Agile Octopus — Today & Tomorrow</h1>
-        <p className="subtitle">
-          High-contrast interactive half-hourly rates (London)
-        </p>
+        <h1>Agile Octopus</h1>
+        <p className="subtitle">Half-hourly rates (London)</p>
       </header>
 
       <main>

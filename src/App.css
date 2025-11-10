@@ -8,7 +8,7 @@
 }
 .app-header h1 {
   margin: 0 0 0.25rem 0;
-  font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+  font-size: clamp(1.4rem, 8vw, 2rem);
   color: #ffffff;
 }
 .subtitle {
@@ -18,7 +18,7 @@
 }
 
 .chart-wrap {
-  height: clamp(320px, 40vh, 520px);
+  height: clamp(180px, 20vh, 520px);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.02),
@@ -54,13 +54,12 @@
 .clocks-group {
   background: rgba(255, 255, 255, 0.02);
   padding: 1rem;
-  margin-top: 1rem;
   border-radius: 10px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
 .clocks-group > .clocks-group-title {
   margin: 0.5rem 0 0.3rem 0;
-  font-size: clamp(1.4rem, 3.2vw, 1.8rem);
+  font-size: clamp(1.4rem, 8vw, 2rem);
   background-color: rgba(4, 31, 42, 0.8);
   position: sticky;
   top: 0;
@@ -74,7 +73,6 @@
 }
 
 .rate-clock {
-  margin-top: 0.3rem;
   padding: 0.6rem;
   display: flex;
   flex-direction: column;
@@ -91,6 +89,16 @@
   display: block;
   width: 100%;
   height: auto;
+}
+
+.rate-clock .hover-display {
+  margin-top: 0.5rem;
+  font-size: 1.3rem;
+}
+
+.rate-clock .hover-display .rate {
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
 /* chart container sizing moved from inline styles in RateClock.tsx */
