@@ -3,11 +3,8 @@ import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { buildPointsData } from '../lib/pointUtils';
-import { TIMINGS } from '../lib/constants';
+import { DEFAULT_PRODUCT, DEFAULT_TARIFF, TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
-
-const DEFAULT_PRODUCT = 'AGILE-24-10-01';
-const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
 
 export default function OctopusCharts() {
   const product = DEFAULT_PRODUCT;

@@ -1,3 +1,6 @@
+export const DEFAULT_PRODUCT = 'AGILE-24-10-01';
+export const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
+
 export const MS = {
   PER_MINUTE: 60_000,
   PER_HALF_HOUR: 30 * 60_000,

@@ -10,6 +10,17 @@ import type {
 import type { PricePoint } from '../lib/pointUtils';
 import { useMemo } from 'react';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
+import {
+  Chart as ChartJS,
+  BarElement,
+  LinearScale,
+  Tooltip,
+  Title,
+  Legend,
+} from 'chart.js';
+import { MyBarScale } from './MyBarScale.ts';
+
+ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyBarScale);
 
 type Props = {
   points: PricePoint[];
