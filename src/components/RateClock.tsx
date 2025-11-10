@@ -25,6 +25,7 @@ import type { PricePoint } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
 import { getRelativePosition } from 'chart.js/helpers';
+import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
 
 ChartJS.register(
   PolarAreaController,
@@ -103,12 +104,13 @@ export default function RateClock({
   }, [allMax, points]);
 
   const plugins = useMemo(
-    () => [hourLabelsPluginFactory(startHourOfDay)],
+    () => [hourLabelsPluginFactory(startHourOfDay), pointerLinePluginFactory()],
     [startHourOfDay],
   );
 
+  const [isHovering, setIsHovering] = useState(false);
   const [hoverIndex, setHoverIndex] = useState<number>(-1);
-  const delayedActiveIndex = useDelayedActiveIndex(hoverIndex, activeIndex);
+  const delayedActiveIndex = useDelayedActiveIndex(activeIndex, isHovering);
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
     const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
@@ -133,18 +135,23 @@ export default function RateClock({
     return <b className="rate-clock">No data for {amPmLabel}</b>;
   }
 
-  const displayedIndex = hoverIndex > 0 ? hoverIndex : delayedActiveIndex;
+  const displayedIndex =
+    hoverIndex > 0
+      ? ([hoverIndex, 'none'] as const)
+      : ([delayedActiveIndex, 'default'] as const);
 
   return (
     <div className="rate-clock">
       <div className="chart-container">
         <ActiveIndexChart
-          activeIndex={displayedIndex}
+          displayIndex={displayedIndex}
           data={data}
           options={optionsWithHover}
-          onHover={setHoverIndex}
+          onHoverIndex={setHoverIndex}
           plugins={plugins}
           style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
+          onPointerEnter={() => setIsHovering(true)}
+          onPointerOut={() => setIsHovering(false)}
         />
         <div className="am-pm-label">
           <div className="label">{amPmLabel}</div>
@@ -152,7 +159,7 @@ export default function RateClock({
       </div>
       <HoverDisplay
         points={points}
-        activeIndex={displayedIndex}
+        activeIndex={displayedIndex[0]}
         ref={fullyVisibleRef}
       />
     </div>
@@ -160,18 +167,18 @@ export default function RateClock({
 }
 
 function ActiveIndexChart({
-  activeIndex,
-  onHover,
+  displayIndex: [activeIndex, chartUpdateMode],
+  onHoverIndex,
   ...chartProps
 }: {
-  activeIndex: number;
-  onHover?: (index: number) => void;
+  displayIndex: readonly [number, 'none' | 'default'];
+  onHoverIndex?: (index: number) => void;
 } & ComponentProps<typeof PolarArea<(number | undefined)[]>>) {
   const ref = useRef<ChartJS<'polarArea', (number | undefined)[]> | null>(null);
 
   useEffect(() => {
-    setChartActiveIndex(ref.current, activeIndex);
-  }, [activeIndex]);
+    setChartActiveIndex(ref.current, activeIndex, chartUpdateMode);
+  }, [activeIndex, chartUpdateMode]);
 
   return (
     <PolarArea
@@ -194,30 +201,28 @@ function ActiveIndexChart({
           },
           true,
         );
-        onHover?.(found);
+        onHoverIndex?.(found);
       }}
-      onPointerLeave={() => onHover?.(-1)}
+      onPointerLeave={() => onHoverIndex?.(-1)}
     />
   );
 }
 
 function useDelayedActiveIndex(
-  hoverIndex: number,
   activeIndex: number,
+  isHovering: boolean,
 ): number {
   const [delayedActiveIndex, setDelayedActiveIndex] =
     useState<number>(activeIndex);
   const resetActiveIndexTimerRef = useRef<number>(0);
 
   useEffect(() => {
-    if (hoverIndex >= 0) {
+    if (isHovering) {
       setDelayedActiveIndex(-1);
       return;
     }
 
     resetActiveIndexTimerRef.current = setTimeout(() => {
-      if (hoverIndex >= 0) return;
-
       setDelayedActiveIndex(activeIndex);
     }, 500);
 
@@ -225,7 +230,7 @@ function useDelayedActiveIndex(
       clearTimeout(resetActiveIndexTimerRef.current);
       resetActiveIndexTimerRef.current = 0;
     };
-  }, [activeIndex, hoverIndex]);
+  }, [activeIndex, isHovering]);
 
   return delayedActiveIndex;
 }
@@ -254,6 +259,7 @@ function HoverDisplay({
 function setChartActiveIndex(
   chart: ChartJS<'polarArea', unknown> | undefined | null,
   index: number,
+  chartUpdateMode: 'none' | 'default' = 'default',
 ) {
   if (chart == null) return;
 
@@ -262,7 +268,7 @@ function setChartActiveIndex(
   } else {
     chart.setActiveElements([{ datasetIndex: 0, index }]);
   }
-  chart.update();
+  chart.update(chartUpdateMode);
 }
 
 // can't go futher with `scales.r.suggestedMax` without a mess
