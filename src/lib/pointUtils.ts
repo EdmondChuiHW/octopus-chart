@@ -53,8 +53,8 @@ export function buildPointsData(
     const isOnTheHour = p.valid_from.getMinutes() === 0;
 
     const startStr = formatTimeLocal(p.valid_from);
-    const endStr = formatTimeLocal(p.valid_to);
-    const label = `${startStr}–${endStr}`;
+    // const endStr = formatTimeLocal(p.valid_to);
+    const label = startStr;
 
     const v = p.value_inc_vat;
     const status = getPointStatus(nowMs, start, end, v);
