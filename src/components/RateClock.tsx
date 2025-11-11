@@ -138,14 +138,16 @@ export default function RateClock({
     },
     [allPoints, onHoverGlobalIndex, points],
   );
+  const alwaysOnLocalIndexHoverRef = useRef(onLocalIndexHover);
+  alwaysOnLocalIndexHoverRef.current = onLocalIndexHover;
 
   const plugins = useMemo(
     () => [
       hourLabelsPluginFactory(startHourOfDay),
       pointerLinePluginFactory(),
-      nearestHoverPluginFactory(onLocalIndexHover),
+      nearestHoverPluginFactory((i) => alwaysOnLocalIndexHoverRef.current(i)),
     ],
-    [startHourOfDay, onLocalIndexHover],
+    [startHourOfDay],
   );
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
