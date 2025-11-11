@@ -3,13 +3,13 @@ import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { buildPointsData } from '../lib/pointUtils';
-import { DEFAULT_PRODUCT, DEFAULT_TARIFF, TIMINGS } from '../lib/constants';
+import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 
 export default function OctopusCharts() {
-  const product = DEFAULT_PRODUCT;
-  const tariff = DEFAULT_TARIFF;
+  const product = CHART_DATA.DEFAULT_PRODUCT;
+  const tariff = CHART_DATA.DEFAULT_TARIFF;
   const { data: apiPoints } = useOctopusPrices(product, tariff);
 
   const nowMs = useNowMs();

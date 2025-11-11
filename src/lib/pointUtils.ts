@@ -5,6 +5,8 @@ import {
   getBorderColorForPoint,
   getPointStatus,
 } from './colors';
+import { isAfter, sub } from 'date-fns';
+import { CHART_DATA } from './constants';
 
 export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
 
@@ -37,7 +39,9 @@ export function buildPointsData(
     return dataPoints;
   }
 
-  // compute values for min/max colouring using incVatValue to be robust
+  points = points.filter((p) =>
+    isAfter(p.valid_from, sub(nowMs, CHART_DATA.DEFAULT_LOOKBACK_DURATION)),
+  );
   const values = points.map((p) => p.value_inc_vat);
   const min = values.length ? Math.min(...values) : 0;
   const max = values.length ? Math.max(...values) : 1;

@@ -1,5 +1,10 @@
-export const DEFAULT_PRODUCT = 'AGILE-24-10-01';
-export const DEFAULT_TARIFF = 'E-1R-AGILE-24-10-01-C';
+import type { Duration } from 'date-fns';
+
+export const CHART_DATA = {
+  DEFAULT_PRODUCT: 'AGILE-24-10-01',
+  DEFAULT_TARIFF: 'E-1R-AGILE-24-10-01-C',
+  DEFAULT_LOOKBACK_DURATION: { hours: 1 } as Duration,
+} as const;
 
 export const MS = {
   PER_MINUTE: 60_000,

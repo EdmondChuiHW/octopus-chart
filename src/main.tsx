@@ -4,11 +4,11 @@ import './index.css';
 import App from './App.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchOctopusPrices } from './lib/queries.ts';
-import { DEFAULT_PRODUCT, DEFAULT_TARIFF } from './lib/constants.ts';
+import { CHART_DATA } from './lib/constants.ts';
 
 const queryClient = new QueryClient();
 void queryClient.prefetchQuery({
-  queryKey: ['prices', DEFAULT_PRODUCT, DEFAULT_TARIFF],
+  queryKey: ['prices', CHART_DATA.DEFAULT_PRODUCT, CHART_DATA.DEFAULT_TARIFF],
   queryFn: fetchOctopusPrices,
 });
 

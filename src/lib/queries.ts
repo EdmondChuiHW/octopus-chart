@@ -1,14 +1,18 @@
 import { type QueryFunctionContext } from '@tanstack/react-query';
 import { ResponseSchema } from '../lib/types';
 import type { ApiPricePoint } from '../lib/types';
-import { addDays, subHours } from 'date-fns';
+import { addDays, sub } from 'date-fns';
+import { CHART_DATA } from './constants';
 
 export async function fetchOctopusPrices(
   ctx: QueryFunctionContext<[string, string, string]>,
 ): Promise<ApiPricePoint[]> {
   const [, p, t] = ctx.queryKey;
   const now = Date.now();
-  const period_from = subHours(now, 1).toISOString();
+  const period_from = sub(
+    now,
+    CHART_DATA.DEFAULT_LOOKBACK_DURATION,
+  ).toISOString();
   const period_to = addDays(now, 2).toISOString();
   const url = `https://api.octopus.energy/v1/products/${encodeURIComponent(
     p,
