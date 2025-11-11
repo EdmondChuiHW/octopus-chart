@@ -24,37 +24,37 @@ export default function OctopusCharts() {
   return (
     <OctopusChartsLayout
       barChart={<PriceChart points={points} />}
-      todayClocks={
-        <>
-          <RateClock
-            dateKey={todayKey}
-            startHourOfDay={0}
-            points={points}
-            nowMs={nowMs}
-          />
-          <RateClock
-            dateKey={todayKey}
-            startHourOfDay={12}
-            points={points}
-            nowMs={nowMs}
-          />
-        </>
+      todayAmClock={
+        <RateClock
+          dateKey={todayKey}
+          startHourOfDay={0}
+          points={points}
+          nowMs={nowMs}
+        />
       }
-      tomorrowClocks={
-        <>
-          <RateClock
-            dateKey={tomorrowKey}
-            startHourOfDay={0}
-            points={points}
-            nowMs={nowMs}
-          />
-          <RateClock
-            dateKey={tomorrowKey}
-            startHourOfDay={12}
-            points={points}
-            nowMs={nowMs}
-          />
-        </>
+      todayPmClock={
+        <RateClock
+          dateKey={todayKey}
+          startHourOfDay={12}
+          points={points}
+          nowMs={nowMs}
+        />
+      }
+      tomorrowAmClock={
+        <RateClock
+          dateKey={tomorrowKey}
+          startHourOfDay={0}
+          points={points}
+          nowMs={nowMs}
+        />
+      }
+      tomorrowPmClock={
+        <RateClock
+          dateKey={tomorrowKey}
+          startHourOfDay={12}
+          points={points}
+          nowMs={nowMs}
+        />
       }
       note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
     />

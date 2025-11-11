@@ -1,28 +1,50 @@
+import './OctopusChartsLayout.css';
+
 export default function OctopusChartsLayout({
   barChart,
-  todayClocks,
-  tomorrowClocks,
+  todayAmClock,
+  todayPmClock,
+  tomorrowAmClock,
+  tomorrowPmClock,
   note,
 }: {
   barChart: React.ReactNode;
-  todayClocks: React.ReactNode;
-  tomorrowClocks: React.ReactNode;
+  todayAmClock: React.ReactNode;
+  todayPmClock: React.ReactNode;
+  tomorrowAmClock: React.ReactNode;
+  tomorrowPmClock: React.ReactNode;
   note: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="octopus-charts-layout">
+      <header className="app-header">
+        <h1>Agile Octopus</h1>
+        <div className="subtitle">Half-hourly rates (London)</div>
+      </header>
+
       <div className="chart-wrap">{barChart}</div>
 
+      <h1 className="clocks-group-title">Today</h1>
       <div className="clocks-group">
-        <h1 className="clocks-group-title">Today</h1>
-        <div className="clocks-row">{todayClocks}</div>
+        <div className="clocks-row">
+          <div className="rate-clock am">{todayAmClock}</div>
+          <div className="rate-clock">{todayPmClock}</div>
+        </div>
       </div>
+
+      <h1 className="clocks-group-title">Tomorrow</h1>
       <div className="clocks-group">
-        <h1 className="clocks-group-title">Tomorrow</h1>
-        <div className="clocks-row">{tomorrowClocks}</div>
+        <div className="clocks-row">
+          <div className="rate-clock am">{tomorrowAmClock}</div>
+          <div className="rate-clock">{tomorrowPmClock}</div>
+        </div>
+      </div>
+
+      <div className="hover-info">
+        <h1>hihi</h1>
       </div>
 
       <div className="note">{note}</div>
-    </>
+    </div>
   );
 }

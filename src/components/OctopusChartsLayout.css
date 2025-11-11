@@ -1,0 +1,13 @@
+.octopus-charts-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.octopus-charts-layout .hover-info {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background-color: rgba(0, 26, 38, 0.8);
+  padding: 1rem;
+}

@@ -6,14 +6,8 @@
   min-height: 100vh;
   box-sizing: border-box;
 }
-.app-header h1 {
-  margin: 0 0 0.25rem 0;
-  font-size: clamp(1.4rem, 8vw, 2rem);
-  color: #ffffff;
-}
 .subtitle {
   color: #d6f1ff;
-  margin: 0 0 1rem 0;
   font-size: 0.95rem;
 }
 
@@ -52,23 +46,16 @@
 
 /* clocks */
 .clocks-group {
-  background: rgba(255, 255, 255, 0.02);
-  padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
-.clocks-group > .clocks-group-title {
-  margin: 0.5rem 0 0.3rem 0;
-  font-size: clamp(1.4rem, 8vw, 2rem);
-  background-color: rgba(4, 31, 42, 0.8);
+.clocks-group-title {
   position: sticky;
   top: 0;
   z-index: 1;
+  background-color: rgba(0, 26, 38, 0.8);
 }
 .clocks-row {
   display: flex;
   gap: 1rem;
-  justify-content: space-evenly;
   flex-wrap: wrap;
 }
 
@@ -80,11 +67,15 @@
   place-content: center;
   /* responsive flex: prefer 240px basis, but allow shrink/grow to fit row */
   flex: 1 1 240px;
-  max-width: 300px;
   box-sizing: border-box;
   text-align: center;
   vertical-align: middle;
+
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
+
 .rate-clock svg {
   display: block;
   width: 100%;

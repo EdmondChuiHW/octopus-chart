@@ -135,7 +135,7 @@ export default function RateClock({
   const amPmLabel = startHourOfDay < 12 ? 'AM' : 'PM';
 
   if (count === 0) {
-    return <b className="rate-clock">No data for {amPmLabel}</b>;
+    return <b>No data for {amPmLabel}</b>;
   }
 
   const displayedIndex =
@@ -144,7 +144,7 @@ export default function RateClock({
       : ([delayedActiveIndex, 'default'] as const);
 
   return (
-    <div className="rate-clock">
+    <>
       <div className="chart-container">
         <ActiveIndexChart
           displayIndex={displayedIndex}
@@ -164,7 +164,7 @@ export default function RateClock({
         activeIndex={displayedIndex[0]}
         ref={fullyVisibleRef}
       />
-    </div>
+    </>
   );
 }
 
