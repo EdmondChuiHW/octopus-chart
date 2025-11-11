@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import PriceChart from './PriceChart';
 import RateClock from './RateClock';
@@ -20,6 +20,17 @@ export default function OctopusCharts() {
     () => buildPointsData(apiPoints, nowMs),
     [apiPoints, nowMs],
   );
+  // TODO put this in buildPointsData
+  const activeIndex = points.findIndex((p) => p.status === 'active');
+
+  const [isHovering, setIsHovering] = useState(false);
+  const [hoverIndex, setHoverIndex] = useState<number>(-1);
+  const delayedActiveIndex = useDelayedActiveIndex(activeIndex, isHovering);
+
+  const displayIndex =
+    hoverIndex > 0
+      ? ([hoverIndex, 'none'] as const)
+      : ([delayedActiveIndex, 'default'] as const);
 
   return (
     <OctopusChartsLayout
@@ -29,7 +40,9 @@ export default function OctopusCharts() {
           dateKey={todayKey}
           startHourOfDay={0}
           points={points}
-          nowMs={nowMs}
+          displayIndex={displayIndex}
+          onHover={(index) => setHoverIndex(index)}
+          setHovering={setIsHovering}
         />
       }
       todayPmClock={
@@ -37,7 +50,9 @@ export default function OctopusCharts() {
           dateKey={todayKey}
           startHourOfDay={12}
           points={points}
-          nowMs={nowMs}
+          displayIndex={displayIndex}
+          onHover={(index) => setHoverIndex(index)}
+          setHovering={setIsHovering}
         />
       }
       tomorrowAmClock={
@@ -45,7 +60,9 @@ export default function OctopusCharts() {
           dateKey={tomorrowKey}
           startHourOfDay={0}
           points={points}
-          nowMs={nowMs}
+          displayIndex={displayIndex}
+          onHover={(index) => setHoverIndex(index)}
+          setHovering={setIsHovering}
         />
       }
       tomorrowPmClock={
@@ -53,7 +70,9 @@ export default function OctopusCharts() {
           dateKey={tomorrowKey}
           startHourOfDay={12}
           points={points}
-          nowMs={nowMs}
+          displayIndex={displayIndex}
+          onHover={(index) => setHoverIndex(index)}
+          setHovering={setIsHovering}
         />
       }
       note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
@@ -72,4 +91,31 @@ function useNowMs(): number {
   }, []);
 
   return nowMs;
+}
+
+function useDelayedActiveIndex(
+  activeIndex: number,
+  isHovering: boolean,
+): number {
+  const [delayedActiveIndex, setDelayedActiveIndex] =
+    useState<number>(activeIndex);
+  const resetActiveIndexTimerRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (isHovering) {
+      setDelayedActiveIndex(-1);
+      return;
+    }
+
+    resetActiveIndexTimerRef.current = setTimeout(() => {
+      setDelayedActiveIndex(activeIndex);
+    }, 500);
+
+    return () => {
+      clearTimeout(resetActiveIndexTimerRef.current);
+      resetActiveIndexTimerRef.current = 0;
+    };
+  }, [activeIndex, isHovering]);
+
+  return delayedActiveIndex;
 }

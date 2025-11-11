@@ -38,24 +38,28 @@ type Props = {
   dateKey: Date | number | string;
   startHourOfDay: number;
   points: PricePoint[];
-  nowMs: number;
+  displayIndex: readonly [number, 'none' | 'default'];
+  onHover?: (index: number) => void;
+  setHovering?: (isHovering: boolean) => void;
 };
 
 export default function RateClock({
   dateKey,
   startHourOfDay,
   points: allPoints,
+  displayIndex: displayGlobalIndex,
+  onHover: onHoverGlobalIndex,
+  setHovering,
 }: Props) {
   const allMax = useMemo(
     () => Math.max(...allPoints.map((p) => p.y)) * 1,
     [allPoints],
   );
-  const [points, count, activeIndex] = useMemo(() => {
+  const [points, count] = useMemo(() => {
     const start = setHours(startOfDay(dateKey), startHourOfDay);
     const pointMap = new Map(allPoints.map((p) => [p.startMs, p]));
     const out: (PricePoint | undefined)[] = [];
     let count = 0;
-    let activeIndex = -1;
     for (let i = 0; i < 24; i++) {
       const key = addMinutes(start, i * 30).getTime();
       const val = pointMap.get(key);
@@ -63,12 +67,9 @@ export default function RateClock({
       if (val == null) continue;
 
       count++;
-      if (val.status === 'active') {
-        activeIndex = i;
-      }
     }
 
-    return [out, count, activeIndex] as const;
+    return [out, count] as const;
   }, [allPoints, dateKey, startHourOfDay]);
 
   const data = useMemo<
@@ -102,17 +103,46 @@ export default function RateClock({
     };
   }, [allMax, points]);
 
-  const [isHovering, setIsHovering] = useState(false);
-  const [hoverIndex, setHoverIndex] = useState<number>(-1);
-  const delayedActiveIndex = useDelayedActiveIndex(activeIndex, isHovering);
+  const displayLocalIndex = useMemo(() => {
+    const [globalIndex, mode] = displayGlobalIndex;
+    if (globalIndex < 0) {
+      return [globalIndex, mode] as const;
+    }
+
+    const point = allPoints.at(globalIndex);
+    if (point == null) {
+      return [-1, mode] as const;
+    }
+
+    const localIndex = points.findIndex((p) => p?.startMs === point.startMs);
+    return [localIndex, mode] as const;
+  }, [allPoints, displayGlobalIndex, points]);
+
+  const onLocalIndexHover = useCallback(
+    (index: number) => {
+      if (onHoverGlobalIndex == null) return;
+
+      const point = points.at(index);
+      if (point == null) {
+        onHoverGlobalIndex(-1);
+        return;
+      }
+
+      const globalIndex = allPoints.findIndex(
+        (p) => p.startMs === point.startMs,
+      );
+      onHoverGlobalIndex(globalIndex);
+    },
+    [allPoints, onHoverGlobalIndex, points],
+  );
 
   const plugins = useMemo(
     () => [
       hourLabelsPluginFactory(startHourOfDay),
       pointerLinePluginFactory(),
-      nearestHoverPluginFactory(setHoverIndex),
+      nearestHoverPluginFactory(onLocalIndexHover),
     ],
-    [startHourOfDay],
+    [startHourOfDay, onLocalIndexHover],
   );
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
@@ -138,22 +168,17 @@ export default function RateClock({
     return <b>No data for {amPmLabel}</b>;
   }
 
-  const displayedIndex =
-    hoverIndex > 0
-      ? ([hoverIndex, 'none'] as const)
-      : ([delayedActiveIndex, 'default'] as const);
-
   return (
     <>
       <div className="chart-container">
         <ActiveIndexChart
-          displayIndex={displayedIndex}
+          displayIndex={displayLocalIndex}
           data={data}
           options={optionsWithHover}
           plugins={plugins}
           style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
-          onPointerEnter={() => setIsHovering(true)}
-          onPointerOut={() => setIsHovering(false)}
+          onPointerEnter={() => setHovering?.(true)}
+          onPointerOut={() => setHovering?.(false)}
         />
         <div className="am-pm-label">
           <div className="label">{amPmLabel}</div>
@@ -161,7 +186,7 @@ export default function RateClock({
       </div>
       <HoverDisplay
         points={points}
-        activeIndex={displayedIndex[0]}
+        activeIndex={displayLocalIndex[0]}
         ref={fullyVisibleRef}
       />
     </>
@@ -181,33 +206,6 @@ function ActiveIndexChart({
   }, [activeIndex, chartUpdateMode]);
 
   return <PolarArea ref={ref} {...chartProps} />;
-}
-
-function useDelayedActiveIndex(
-  activeIndex: number,
-  isHovering: boolean,
-): number {
-  const [delayedActiveIndex, setDelayedActiveIndex] =
-    useState<number>(activeIndex);
-  const resetActiveIndexTimerRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (isHovering) {
-      setDelayedActiveIndex(-1);
-      return;
-    }
-
-    resetActiveIndexTimerRef.current = setTimeout(() => {
-      setDelayedActiveIndex(activeIndex);
-    }, 500);
-
-    return () => {
-      clearTimeout(resetActiveIndexTimerRef.current);
-      resetActiveIndexTimerRef.current = 0;
-    };
-  }, [activeIndex, isHovering]);
-
-  return delayedActiveIndex;
 }
 
 function HoverDisplay({
