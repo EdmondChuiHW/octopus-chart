@@ -4,9 +4,7 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
   type ComponentProps,
-  type Ref,
 } from 'react';
 import type { ChartData, ChartDataset, ChartOptions } from 'chart.js';
 
@@ -122,6 +120,11 @@ export default function RateClock({
     (index: number) => {
       if (onHoverGlobalIndex == null) return;
 
+      if (index < 0) {
+        onHoverGlobalIndex(-1);
+        return;
+      }
+
       const point = points.at(index);
       if (point == null) {
         onHoverGlobalIndex(-1);
@@ -160,8 +163,6 @@ export default function RateClock({
     return options;
   }, [allMax]);
 
-  const [fullyVisibleRef, isFullyVisible] = useFullyVisible<HTMLDivElement>();
-
   const amPmLabel = startHourOfDay < 12 ? 'AM' : 'PM';
 
   if (count === 0) {
@@ -176,7 +177,7 @@ export default function RateClock({
           data={data}
           options={optionsWithHover}
           plugins={plugins}
-          style={{ touchAction: isFullyVisible ? 'pinch-zoom' : 'auto' }}
+          style={{ touchAction: 'pinch-zoom' }}
           onPointerEnter={() => setHovering?.(true)}
           onPointerOut={() => setHovering?.(false)}
         />
@@ -184,11 +185,6 @@ export default function RateClock({
           <div className="label">{amPmLabel}</div>
         </div>
       </div>
-      <HoverDisplay
-        points={points}
-        activeIndex={displayLocalIndex[0]}
-        ref={fullyVisibleRef}
-      />
     </>
   );
 }
@@ -206,29 +202,6 @@ function ActiveIndexChart({
   }, [activeIndex, chartUpdateMode]);
 
   return <PolarArea ref={ref} {...chartProps} />;
-}
-
-function HoverDisplay({
-  points,
-  activeIndex,
-  ref,
-}: {
-  points: (PricePoint | undefined)[];
-  activeIndex: number;
-  ref?: Ref<HTMLDivElement>;
-}) {
-  const point = useMemo(() => {
-    return activeIndex < 0 ? undefined : points.at(activeIndex);
-  }, [points, activeIndex]);
-
-  return (
-    <div className="hover-display">
-      <div>{point?.label ?? '–'}</div>
-      <div ref={ref} className="rate">
-        {point?.y ?? '–'}p/kWh
-      </div>
-    </div>
-  );
 }
 
 function setChartActiveIndex(
@@ -271,39 +244,3 @@ const OPTIONS = {
     },
   },
 } satisfies NoComponentOptions;
-
-function useFullyVisible<E extends HTMLElement>(): readonly [Ref<E>, boolean] {
-  const [isFullyVisible, setIsFullyVisible] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const ref: Ref<E> = useCallback((e: E | null) => {
-    if (e == null) {
-      observerRef.current?.disconnect();
-      observerRef.current = null;
-      return;
-    }
-
-    const callback: IntersectionObserverCallback = (entries) => {
-      const entry = pickLastEntry(entries);
-      if (!entry) return;
-
-      setIsFullyVisible(entry.isIntersecting);
-    };
-    const options: IntersectionObserverInit = {
-      threshold: 1.0,
-    };
-    observerRef.current = new IntersectionObserver(callback, options);
-    observerRef.current.observe(e);
-  }, []);
-
-  return [ref, isFullyVisible] as const;
-}
-
-function pickLastEntry(entries: IntersectionObserverEntry[]) {
-  let lastEntry: IntersectionObserverEntry | null = null;
-  for (const entry of entries) {
-    if (lastEntry == null || entry.time > lastEntry.time) {
-      lastEntry = entry;
-    }
-  }
-  return lastEntry;
-}

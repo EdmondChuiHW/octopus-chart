@@ -6,6 +6,7 @@ import { buildPointsData } from '../lib/pointUtils';
 import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
+import HoverDisplay from './HoverDisplay';
 
 export default function OctopusCharts() {
   const product = CHART_DATA.DEFAULT_PRODUCT;
@@ -23,14 +24,44 @@ export default function OctopusCharts() {
   // TODO put this in buildPointsData
   const activeIndex = points.findIndex((p) => p.status === 'active');
 
-  const [isHovering, setIsHovering] = useState(false);
+  // TODO check multi-touch behaviour
+  const [hoverSource, setHoverSource] = useState<
+    'today-am' | 'today-pm' | 'tomorrow-am' | 'tomorrow-pm' | undefined
+  >();
   const [hoverIndex, setHoverIndex] = useState<number>(-1);
-  const delayedActiveIndex = useDelayedActiveIndex(activeIndex, isHovering);
+  const delayedActiveIndex = useDelayedActiveIndex(
+    activeIndex,
+    hoverSource != null,
+  );
 
-  const displayIndex =
-    hoverIndex > 0
-      ? ([hoverIndex, 'none'] as const)
-      : ([delayedActiveIndex, 'default'] as const);
+  const displayIndex = useMemo(
+    () =>
+      hoverIndex > 0
+        ? ([hoverIndex, 'none'] as const)
+        : ([delayedActiveIndex, 'default'] as const),
+    [hoverIndex, delayedActiveIndex],
+  );
+  const displayPoint = useMemo(
+    () => (displayIndex[0] < 0 ? undefined : points.at(displayIndex[0])),
+    [points, displayIndex],
+  );
+
+  const hoverTitle = useMemo(() => {
+    if (!hoverSource) {
+      return 'Now';
+    }
+
+    switch (hoverSource) {
+      case 'today-am':
+      case 'today-pm':
+        return 'Today';
+      case 'tomorrow-am':
+      case 'tomorrow-pm':
+        return 'Tomorrow';
+      default:
+        throw new Error(`Unknown hover source: ${hoverSource satisfies never}`);
+    }
+  }, [hoverSource]);
 
   return (
     <OctopusChartsLayout
@@ -42,7 +73,7 @@ export default function OctopusCharts() {
           points={points}
           displayIndex={displayIndex}
           onHover={(index) => setHoverIndex(index)}
-          setHovering={setIsHovering}
+          setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
         />
       }
       todayPmClock={
@@ -52,7 +83,7 @@ export default function OctopusCharts() {
           points={points}
           displayIndex={displayIndex}
           onHover={(index) => setHoverIndex(index)}
-          setHovering={setIsHovering}
+          setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
         />
       }
       tomorrowAmClock={
@@ -62,7 +93,7 @@ export default function OctopusCharts() {
           points={points}
           displayIndex={displayIndex}
           onHover={(index) => setHoverIndex(index)}
-          setHovering={setIsHovering}
+          setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
         />
       }
       tomorrowPmClock={
@@ -72,10 +103,11 @@ export default function OctopusCharts() {
           points={points}
           displayIndex={displayIndex}
           onHover={(index) => setHoverIndex(index)}
-          setHovering={setIsHovering}
+          setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
         />
       }
       note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
+      hoverInfo={<HoverDisplay point={displayPoint} title={hoverTitle} />}
     />
   );
 }

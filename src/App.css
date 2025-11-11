@@ -82,16 +82,6 @@
   height: auto;
 }
 
-.rate-clock .hover-display {
-  margin-top: 0.5rem;
-  font-size: 1.3rem;
-}
-
-.rate-clock .hover-display .rate {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
 /* chart container sizing moved from inline styles in RateClock.tsx */
 .rate-clock .chart-container {
   width: 100%;

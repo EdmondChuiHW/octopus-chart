@@ -7,6 +7,7 @@ export default function OctopusChartsLayout({
   tomorrowAmClock,
   tomorrowPmClock,
   note,
+  hoverInfo,
 }: {
   barChart: React.ReactNode;
   todayAmClock: React.ReactNode;
@@ -14,6 +15,7 @@ export default function OctopusChartsLayout({
   tomorrowAmClock: React.ReactNode;
   tomorrowPmClock: React.ReactNode;
   note: React.ReactNode;
+  hoverInfo?: React.ReactNode;
 }) {
   return (
     <div className="octopus-charts-layout">
@@ -40,9 +42,7 @@ export default function OctopusChartsLayout({
         </div>
       </div>
 
-      <div className="hover-info">
-        <h1>hihi</h1>
-      </div>
+      {hoverInfo && <div className="hover-info">{hoverInfo}</div>}
 
       <div className="note">{note}</div>
     </div>
