@@ -17,20 +17,36 @@ import {
   Tooltip,
   Title,
   Legend,
+  LineController,
+  LineElement,
+  PointElement,
 } from 'chart.js';
 import { MyBarScale } from './MyBarScale.ts';
 
-ChartJS.register(LinearScale, BarElement, Tooltip, Title, Legend, MyBarScale);
+ChartJS.register(
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Title,
+  Legend,
+  MyBarScale,
+  LineController,
+  LineElement,
+  PointElement,
+);
 
 type Props = {
   points: PricePoint[];
 };
 
 export default function PriceChart({ points }: Props) {
-  const data = useMemo<ChartData<'bar', PricePoint[], string>>(() => {
+  const data = useMemo<
+    ChartData<'bar', (PricePoint | undefined)[], string>
+  >(() => {
     const dataset: ChartDataset<'bar', PricePoint[]> = {
       label: 'p/kWh (inc VAT)',
       data: points,
+      order: 2,
       borderRadius: 12,
       backgroundColor: (ctx) => {
         return points.at(ctx.dataIndex)?.backgroundColor;
@@ -42,7 +58,29 @@ export default function PriceChart({ points }: Props) {
         return points.at(ctx.dataIndex)?.borderColor != null ? 2 : undefined;
       },
     };
-    return { labels: points.map((d) => d.label), datasets: [dataset] };
+
+    // compute 3-hour moving average (include current point and previous points within 3 hours)
+    const movingAvg = computeMovingAverage(points, 3 * 60 * 60 * 1000);
+
+    const maDataset = {
+      type: 'line',
+      label: '3h MA',
+      data: movingAvg,
+      order: 1,
+      borderColor: 'rgba(255,255,255,0.9)',
+      borderWidth: 2,
+      tension: 0.25,
+      pointRadius: 0,
+      yAxisID: 'y',
+    } as ChartDataset<'line', (number | undefined)[]>;
+
+    return {
+      labels: points.map((d) => d.label),
+      datasets: [
+        dataset,
+        maDataset as unknown as ChartDataset<'bar', (PricePoint | undefined)[]>,
+      ],
+    };
   }, [points]);
 
   return <Bar options={options} data={data} plugins={plugins} style={style} />;
@@ -50,6 +88,45 @@ export default function PriceChart({ points }: Props) {
 
 function getPoints({ chart }: { chart: Chart }): PricePoint[] {
   return chart.data.datasets[0].data as PricePoint[];
+}
+
+/**
+ * Compute moving average over a sliding time window (in ms).
+ * For each point i, average y-values of points with startMs >= points[i].startMs - windowMs + 1 and <= points[i].startMs
+ */
+function computeMovingAverage(
+  points: PricePoint[],
+  windowMs: number,
+): (number | undefined)[] {
+  const n = points.length;
+  const out: (number | undefined)[] = Array<number | undefined>(n);
+  if (n === 0) return out;
+
+  // Forward-looking sliding window: for each index i, average points with
+  // startMs in [points[i].startMs, points[i].startMs + windowMs)
+  let right = 0;
+  let sum = 0;
+
+  for (let i = 0; i < n; i++) {
+    // remove the previous element from sum (we want window starting at i)
+    if (i > 0) {
+      sum -= points[i - 1].y;
+    }
+
+    // ensure right is at least i
+    if (right < i) right = i;
+
+    const windowEnd = points[i].startMs + windowMs - 1;
+    while (right < n && points[right].startMs <= windowEnd) {
+      sum += points[right].y;
+      right++;
+    }
+
+    const count = right - i;
+    out[i] = count > 0 ? sum / count : undefined;
+  }
+
+  return out;
 }
 
 const plugins: Plugin[] = [axisTickPluginFactory()];
@@ -65,7 +142,7 @@ const options: ChartOptions<'bar'> = {
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => {
           const v = ctx.parsed.y;
-          return v == null ? 'No data' : `${v}p/kWh`;
+          return v == null ? 'No data' : `${v.toFixed(2)}p/kWh`;
         },
       },
       bodyFont: { size: 16 },
