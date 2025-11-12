@@ -75,7 +75,7 @@ export default function RateClock({
         return points.at(ctx.dataIndex)?.backgroundColor;
       },
       borderColor: 'rgba(0,0,0,0.9)',
-      borderWidth: 1,
+      borderWidth: 0.7,
       hoverBorderColor: 'rgba(0,120,212,0.95)',
       hoverBorderWidth: 4,
       borderRadius: 4,
@@ -148,7 +148,7 @@ export default function RateClock({
   );
 
   const optionsWithHover: ChartOptions<'polarArea'> = useMemo(() => {
-    const options = structuredClone<ChartOptions<'polarArea'>>(OPTIONS);
+    const options: ChartOptions<'polarArea'> = makeOptions();
     // we handle hover with our own onPointerMove
     // cuz built-in hover resets active elements
     options.events = [];
@@ -180,9 +180,9 @@ export default function RateClock({
           onPointerEnter={() => setHovering?.(true)}
           onPointerOut={() => setHovering?.(false)}
         />
-        <div className="am-pm-label">
-          <div className="label">{amPmLabel}</div>
-        </div>
+      </div>
+      <div className="am-pm-label">
+        <div className="label">{amPmLabel}</div>
       </div>
     </>
   );
@@ -191,25 +191,36 @@ export default function RateClock({
 // can't go futher with `scales.r.suggestedMax` without a mess
 type NoComponentOptions = Omit<ChartOptions<'polarArea'>, 'onHover'>;
 
-const OPTIONS = {
-  maintainAspectRatio: false,
-  layout: {
-    padding: 8,
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: { enabled: false },
-  },
-  hover: {
-    // intersect: false,
-  },
-  scales: {
-    r: {
-      ticks: { display: false, count: 2 },
-      grid: {
-        color: COLORS.CLOCK_CIRCLE,
-        lineWidth: 4,
+function makeOptions() {
+  return {
+    maintainAspectRatio: false,
+    layout: {
+      padding: 8,
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+    },
+    hover: {
+      // intersect: false,
+    },
+    scales: {
+      r: {
+        ticks: { display: false, count: 2 },
+        grid: {
+          color: (ctx) => {
+            const canvas = ctx.chart.canvas;
+            const parent = canvas.closest('.rate-clock');
+            if (parent?.classList.contains('am')) {
+              // Make the ring significantly darker for strong contrast on
+              // light backgrounds per user request.
+              return 'rgba(2,14,18,0.56)';
+            }
+            return COLORS.CLOCK_CIRCLE;
+          },
+          lineWidth: 4,
+        },
       },
     },
-  },
-} satisfies NoComponentOptions;
+  } satisfies NoComponentOptions;
+}

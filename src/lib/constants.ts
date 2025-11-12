@@ -31,7 +31,7 @@ export const COLORS = {
   BORDER_LIGHT: 'rgba(0,0,0,0.12)',
   HOUR_TICK: 'rgba(255,255,255,0.6)',
   CLOCK_CIRCLE: 'rgba(255,255,255,0.6)',
-  HALF_TICK: '#eaf6ff',
+  HALF_TICK: 'rgba(234,246,255,0.55)',
   HOUR_LABEL: '#eaf6ff',
 } as const;
 

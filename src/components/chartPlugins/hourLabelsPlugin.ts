@@ -39,8 +39,22 @@ export function hourLabelsPluginFactory(
 
       ctx.save();
 
+      // Determine whether the containing .rate-clock has the 'am' (light)
+      // theme so we can adapt canvas-drawn colors (ticks, labels) to remain
+      // visible on a light background.
+      let hourTickColor: string = COLORS.HOUR_TICK;
+      let halfTickColor: string = COLORS.HALF_TICK;
+      const canvas = chart.canvas;
+      const parent = canvas.closest('.rate-clock');
+      if (parent?.classList.contains('am')) {
+        // Make ticks significantly darker for high contrast on light
+        // backgrounds per user request.
+        hourTickColor = 'rgba(2,14,18,0.56)';
+        halfTickColor = 'rgba(2,14,18,0.4)';
+      }
+
       // Draw hour ticks (thicker)
-      ctx.strokeStyle = COLORS.HOUR_TICK;
+      ctx.strokeStyle = hourTickColor;
       ctx.lineWidth = Math.max(2, rOuter * 0.018);
       ctx.globalAlpha = 0.9;
       for (let h = 0; h < 12; h++) {
@@ -56,8 +70,8 @@ export function hourLabelsPluginFactory(
       }
 
       // Draw half-hour ticks (thinner)
-      ctx.strokeStyle = COLORS.HALF_TICK;
-      ctx.lineWidth = Math.max(1, rOuter * 0.009);
+      ctx.strokeStyle = halfTickColor;
+      ctx.lineWidth = Math.max(1, rOuter * 0.02);
       ctx.globalAlpha = 0.6;
       for (let i = 0; i < 24; i++) {
         if (i % 2 === 0) continue; // skip hours
@@ -76,7 +90,21 @@ export function hourLabelsPluginFactory(
       ctx.globalAlpha = 1;
 
       // Draw hour labels with shadow for clarity
-      ctx.fillStyle = COLORS.HOUR_LABEL;
+      // Choose color/shadow depending on whether the containing .rate-clock
+      // element is using the light ("am") theme. The hour labels are drawn
+      // on the chart canvas, so we detect the parent element and adapt.
+      let hourLabelColor: string = COLORS.HOUR_LABEL;
+      let shadowColor = 'rgba(0,0,0,0.45)';
+      let shadowBlurFactor = 0.18;
+      if (parent?.classList.contains('am')) {
+        // Use very dark label color and stronger shadow for maximum
+        // legibility on light backgrounds.
+        hourLabelColor = '#000b0b';
+        shadowColor = 'rgba(2,14,18,0.36)';
+        shadowBlurFactor = 0.14;
+      }
+
+      ctx.fillStyle = hourLabelColor;
       const fontSize = Math.max(
         18,
         Math.round(rOuter * CLOCK_LAYOUT.HOUR_FONT_RATIO),
@@ -84,8 +112,8 @@ export function hourLabelsPluginFactory(
       ctx.font = `700 ${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.45)';
-      ctx.shadowBlur = fontSize * 0.18;
+      ctx.shadowColor = shadowColor;
+      ctx.shadowBlur = fontSize * shadowBlurFactor;
       for (let h = 0; h < 12; h++) {
         const angle = (h / 12) * Math.PI * 2 - Math.PI / 2;
         const lx = cx + rLabel * Math.cos(angle);
