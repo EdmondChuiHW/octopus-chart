@@ -1,24 +1,16 @@
+import HoverDisplay from './HoverDisplay';
 import OctopusChartsLayout from './OctopusChartsLayout';
 
 export default function OctopusChartsPlaceholder() {
   return (
     <>
       <OctopusChartsLayout
+        hoverInfo={<HoverDisplay point={undefined} />}
         barChart={null}
-        todayClocks={
-          <>
-            <div className="rate-clock">
-              <div className="chart-container"></div>
-            </div>
-          </>
-        }
-        tomorrowClocks={
-          <>
-            <div className="rate-clock">
-              <div className="chart-container"></div>
-            </div>
-          </>
-        }
+        todayAmClock={<div className="chart-container"></div>}
+        todayPmClock={<div className="chart-container"></div>}
+        tomorrowAmClock={<div className="chart-container"></div>}
+        tomorrowPmClock={<div className="chart-container"></div>}
         note={null}
       />
     </>
