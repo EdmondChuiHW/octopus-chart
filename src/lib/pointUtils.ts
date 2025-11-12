@@ -67,7 +67,7 @@ export function buildPointsData(
       startMs: start,
       endMs: end,
       label,
-      tickLabel: status === 'active' || isOnTheHour ? startStr : undefined,
+      tickLabel: isOnTheHour ? startStr : undefined,
       backgroundColor,
       borderColor,
       status,

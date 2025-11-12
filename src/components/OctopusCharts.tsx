@@ -59,7 +59,7 @@ export default function OctopusCharts() {
           <PriceChart
             points={points}
             displayIndex={displayIndex}
-            onHover={(index) => setHoverIndex(index)}
+            onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
           />
         }
@@ -69,7 +69,7 @@ export default function OctopusCharts() {
             startHourOfDay={0}
             points={points}
             displayIndex={displayIndex}
-            onHover={(index) => setHoverIndex(index)}
+            onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
           />
         }
@@ -79,7 +79,7 @@ export default function OctopusCharts() {
             startHourOfDay={12}
             points={points}
             displayIndex={displayIndex}
-            onHover={(index) => setHoverIndex(index)}
+            onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
           />
         }
@@ -89,7 +89,7 @@ export default function OctopusCharts() {
             startHourOfDay={0}
             points={points}
             displayIndex={displayIndex}
-            onHover={(index) => setHoverIndex(index)}
+            onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
           />
         }
@@ -99,7 +99,7 @@ export default function OctopusCharts() {
             startHourOfDay={12}
             points={points}
             displayIndex={displayIndex}
-            onHover={(index) => setHoverIndex(index)}
+            onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
           />
         }

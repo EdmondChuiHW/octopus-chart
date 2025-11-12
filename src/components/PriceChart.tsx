@@ -22,6 +22,8 @@ import {
 } from 'chart.js';
 import { MyBarScale } from './MyBarScale.ts';
 import useActiveChartIndex from '../hooks/useActiveChartIndex.ts';
+import annotationPlugin from 'chartjs-plugin-annotation';
+import { COLORS } from '../lib/constants.ts';
 
 ChartJS.register(
   LinearScale,
@@ -33,6 +35,7 @@ ChartJS.register(
   LineController,
   LineElement,
   PointElement,
+  annotationPlugin,
 );
 
 type Props = {
@@ -48,17 +51,17 @@ export default function PriceChart({
   onHover,
   displayIndex,
 }: Props) {
-  const data = useMemo<
-    ChartData<'bar', (PricePoint | undefined)[], string>
-  >(() => {
+  const data = useMemo<ChartData<'bar', PricePoint[], string>>(() => {
     const dataset: ChartDataset<'bar', PricePoint[]> = {
       label: 'p/kWh (inc VAT)',
       data: points,
       order: 2,
+      barPercentage: 1.0,
+      categoryPercentage: 1.0,
       borderRadius: 12,
       hoverBorderColor: 'rgba(0,120,212,0.95)',
       hoverBorderWidth: 4,
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: 'rgba(0,0,0,0.9)',
       backgroundColor: (ctx) => {
         return points.at(ctx.dataIndex)?.backgroundColor;
@@ -84,7 +87,7 @@ export default function PriceChart({
       labels: points.map((d) => d.label),
       datasets: [
         dataset,
-        maDataset as unknown as ChartDataset<'bar', (PricePoint | undefined)[]>,
+        maDataset as unknown as ChartDataset<'bar', PricePoint[]>,
       ],
     };
   }, [points]);
@@ -100,12 +103,19 @@ export default function PriceChart({
         event.nativeEvent,
         'x',
         { intersect: false },
-        false,
+        true,
       );
 
       const barPoints = points.filter((p) => p.datasetIndex === 0);
 
       if (barPoints.length === 1) {
+        chart.setActiveElements([
+          {
+            datasetIndex: 0,
+            index: barPoints[0].index,
+          },
+        ]);
+        chart.update();
         onHover?.(barPoints[0].index);
       } else {
         onHover?.(-1);
@@ -169,21 +179,68 @@ function computeMovingAverage(
 
 const plugins: Plugin[] = [axisTickPluginFactory()];
 
-function getIsActive({ chart }: { chart: Chart }, index: number): boolean {
-  return chart
+function getPoints({ chart }: { chart: Chart }): PricePoint[] {
+  return chart.data.datasets[0].data as PricePoint[];
+}
+
+function getActiveIndex({ chart }: { chart: Chart }): number {
+  const activeElements = chart
     .getActiveElements()
-    .some((el) => el.datasetIndex === 0 && el.index === index);
+    .filter((el) => el.datasetIndex === 0);
+  if (activeElements.length !== 1) {
+    return -1;
+  }
+
+  return activeElements[0].index;
+}
+
+function getActivePoint(ctx: { chart: Chart }): PricePoint | undefined {
+  const i = getActiveIndex(ctx);
+  return i >= 0 ? getPoints(ctx).at(i) : undefined;
 }
 
 const options: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
   events: [],
-  interaction: { mode: 'index', intersect: false },
+  hover: {},
   plugins: {
     legend: { display: false },
     tooltip: { enabled: false },
     title: { display: false },
+    annotation: {
+      animations: {
+        numbers: {
+          properties: [],
+          type: 'number',
+        },
+      },
+      annotations: [
+        {
+          type: 'line',
+          id: 'activeLine',
+          drawTime: 'afterDraw',
+          adjustScaleRange: false,
+          borderColor: COLORS.PRIMARY_BLUE,
+          display: (ctx) => getActiveIndex(ctx) >= 0,
+          xMin: (ctx) => getActiveIndex(ctx),
+          xMax: (ctx) => getActiveIndex(ctx),
+          yMin: (ctx) => (getActivePoint(ctx)?.y ?? 0) * 1.1,
+          borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
+          label: {
+            display: (ctx) => getActiveIndex(ctx) >= 0,
+            content: (ctx) => getActivePoint(ctx)?.label ?? '',
+            position: 'end',
+            backgroundColor: COLORS.PRIMARY_BLUE,
+            color: '#ffffff',
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
+          },
+        },
+      ],
+    },
   },
   scales: {
     x: {
@@ -192,34 +249,12 @@ const options: ChartOptions<'bar'> = {
 
       ticks: {
         color: '#ffffff',
-        backdropPadding: 4,
         autoSkip: false,
         align: 'center',
-        backdropColor: (ctx) => {
-          return getIsActive(ctx, ctx.tick.value)
-            ? 'rgba(0,120,212,0.95)'
-            : undefined;
-        },
-        showLabelBackdrop: (ctx) => {
-          return getIsActive(ctx, ctx.tick.value);
-        },
-        font: {
-          size: (ctx) => {
-            return getIsActive(ctx, ctx.tick.value) ? 14 : 12;
-          },
-          weight: (ctx) => {
-            return getIsActive(ctx, ctx.tick.value) ? 700 : 400;
-          },
-        },
         callback(_val, index) {
-          const points = this.chart.data.datasets[0].data as PricePoint[];
+          const points = getPoints(this);
           const point = index >= 0 ? points.at(index) : undefined;
-          const label = point?.tickLabel;
-          if (label) return label;
-
-          if (getIsActive(this, index)) {
-            return point?.label;
-          }
+          return point?.tickLabel;
         },
       },
       grid: { display: false },
