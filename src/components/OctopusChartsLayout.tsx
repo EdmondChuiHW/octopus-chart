@@ -24,10 +24,12 @@ export default function OctopusChartsLayout({
         <div className="subtitle">Half-hourly rates (London)</div>
       </header>
 
+      {hoverInfo && <div className="hover-info">{hoverInfo}</div>}
+
       <div className="chart-wrap">{barChart}</div>
 
       <h1 className="clocks-group-title">Today</h1>
-      <div className="clocks-group">
+      <div>
         <div className="clocks-row">
           <div className="rate-clock am">{todayAmClock}</div>
           <div className="rate-clock">{todayPmClock}</div>
@@ -35,14 +37,12 @@ export default function OctopusChartsLayout({
       </div>
 
       <h1 className="clocks-group-title">Tomorrow</h1>
-      <div className="clocks-group">
+      <div>
         <div className="clocks-row">
           <div className="rate-clock am">{tomorrowAmClock}</div>
           <div className="rate-clock">{tomorrowPmClock}</div>
         </div>
       </div>
-
-      {hoverInfo && <div className="hover-info">{hoverInfo}</div>}
 
       <div className="note">{note}</div>
     </div>

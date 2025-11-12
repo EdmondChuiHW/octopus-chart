@@ -45,12 +45,7 @@
 }
 
 /* clocks */
-.clocks-group {
-}
 .clocks-group-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   background-color: rgba(0, 26, 38, 0.8);
 }
 .clocks-row {
