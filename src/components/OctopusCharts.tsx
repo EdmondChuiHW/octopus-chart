@@ -26,9 +26,15 @@ export default function OctopusCharts() {
 
   // TODO check multi-touch behaviour
   const [hoverSource, setHoverSource] = useState<
-    'today-am' | 'today-pm' | 'tomorrow-am' | 'tomorrow-pm' | undefined
+    | 'today-am'
+    | 'today-pm'
+    | 'tomorrow-am'
+    | 'tomorrow-pm'
+    | 'chart'
+    | undefined
   >();
-  const [hoverIndex, setHoverIndex] = useState<number>(-1);
+  const [rawHoverIndex, setHoverIndex] = useState<number>(-1);
+  const hoverIndex = hoverSource != null ? rawHoverIndex : -1;
   const delayedActiveIndex = useDelayedActiveIndex(
     activeIndex,
     hoverSource != null,
@@ -46,69 +52,61 @@ export default function OctopusCharts() {
     [points, displayIndex],
   );
 
-  const hoverTitle = useMemo(() => {
-    if (!hoverSource) {
-      return 'Now';
-    }
-
-    switch (hoverSource) {
-      case 'today-am':
-      case 'today-pm':
-        return 'Today';
-      case 'tomorrow-am':
-      case 'tomorrow-pm':
-        return 'Tomorrow';
-      default:
-        throw new Error(`Unknown hover source: ${hoverSource satisfies never}`);
-    }
-  }, [hoverSource]);
-
   return (
-    <OctopusChartsLayout
-      barChart={<PriceChart points={points} />}
-      todayAmClock={
-        <RateClock
-          dateKey={todayKey}
-          startHourOfDay={0}
-          points={points}
-          displayIndex={displayIndex}
-          onHover={(index) => setHoverIndex(index)}
-          setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
-        />
-      }
-      todayPmClock={
-        <RateClock
-          dateKey={todayKey}
-          startHourOfDay={12}
-          points={points}
-          displayIndex={displayIndex}
-          onHover={(index) => setHoverIndex(index)}
-          setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
-        />
-      }
-      tomorrowAmClock={
-        <RateClock
-          dateKey={tomorrowKey}
-          startHourOfDay={0}
-          points={points}
-          displayIndex={displayIndex}
-          onHover={(index) => setHoverIndex(index)}
-          setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
-        />
-      }
-      tomorrowPmClock={
-        <RateClock
-          dateKey={tomorrowKey}
-          startHourOfDay={12}
-          points={points}
-          displayIndex={displayIndex}
-          onHover={(index) => setHoverIndex(index)}
-          setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
-        />
-      }
-      note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
-      hoverInfo={<HoverDisplay point={displayPoint} title={hoverTitle} />}
-    />
+    <>
+      <OctopusChartsLayout
+        barChart={
+          <PriceChart
+            points={points}
+            displayIndex={displayIndex}
+            onHover={(index) => setHoverIndex(index)}
+            setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
+          />
+        }
+        todayAmClock={
+          <RateClock
+            dateKey={todayKey}
+            startHourOfDay={0}
+            points={points}
+            displayIndex={displayIndex}
+            onHover={(index) => setHoverIndex(index)}
+            setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
+          />
+        }
+        todayPmClock={
+          <RateClock
+            dateKey={todayKey}
+            startHourOfDay={12}
+            points={points}
+            displayIndex={displayIndex}
+            onHover={(index) => setHoverIndex(index)}
+            setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
+          />
+        }
+        tomorrowAmClock={
+          <RateClock
+            dateKey={tomorrowKey}
+            startHourOfDay={0}
+            points={points}
+            displayIndex={displayIndex}
+            onHover={(index) => setHoverIndex(index)}
+            setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
+          />
+        }
+        tomorrowPmClock={
+          <RateClock
+            dateKey={tomorrowKey}
+            startHourOfDay={12}
+            points={points}
+            displayIndex={displayIndex}
+            onHover={(index) => setHoverIndex(index)}
+            setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
+          />
+        }
+        note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
+        hoverInfo={<HoverDisplay point={displayPoint} />}
+      />
+    </>
   );
 }
 

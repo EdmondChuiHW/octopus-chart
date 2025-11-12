@@ -5,10 +5,9 @@ import type {
   Plugin,
   ChartDataset,
   Chart,
-  TooltipItem,
 } from 'chart.js';
 import type { PricePoint } from '../lib/pointUtils';
-import { useMemo } from 'react';
+import { useCallback, useMemo, type ComponentProps } from 'react';
 import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
 import {
   Chart as ChartJS,
@@ -22,6 +21,7 @@ import {
   PointElement,
 } from 'chart.js';
 import { MyBarScale } from './MyBarScale.ts';
+import useActiveChartIndex from '../hooks/useActiveChartIndex.ts';
 
 ChartJS.register(
   LinearScale,
@@ -37,9 +37,17 @@ ChartJS.register(
 
 type Props = {
   points: PricePoint[];
+  setHovering?: (isHovering: boolean) => void;
+  onHover?: (index: number) => void;
+  displayIndex: readonly [number, 'none' | 'default'];
 };
 
-export default function PriceChart({ points }: Props) {
+export default function PriceChart({
+  points,
+  setHovering,
+  onHover,
+  displayIndex,
+}: Props) {
   const data = useMemo<
     ChartData<'bar', (PricePoint | undefined)[], string>
   >(() => {
@@ -48,14 +56,12 @@ export default function PriceChart({ points }: Props) {
       data: points,
       order: 2,
       borderRadius: 12,
+      hoverBorderColor: 'rgba(0,120,212,0.95)',
+      hoverBorderWidth: 4,
+      borderWidth: 1,
+      borderColor: 'rgba(0,0,0,0.9)',
       backgroundColor: (ctx) => {
         return points.at(ctx.dataIndex)?.backgroundColor;
-      },
-      borderColor: (ctx) => {
-        return points.at(ctx.dataIndex)?.borderColor;
-      },
-      borderWidth: (ctx) => {
-        return points.at(ctx.dataIndex)?.borderColor != null ? 2 : undefined;
       },
     };
 
@@ -83,11 +89,43 @@ export default function PriceChart({ points }: Props) {
     };
   }, [points]);
 
-  return <Bar options={options} data={data} plugins={plugins} style={style} />;
-}
+  const ref = useActiveChartIndex<ChartJS<'bar'>>(displayIndex);
 
-function getPoints({ chart }: { chart: Chart }): PricePoint[] {
-  return chart.data.datasets[0].data as PricePoint[];
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLCanvasElement>) => {
+      const chart = ref.current;
+      if (!chart) return;
+
+      const points = chart.getElementsAtEventForMode(
+        event.nativeEvent,
+        'x',
+        { intersect: false },
+        false,
+      );
+
+      const barPoints = points.filter((p) => p.datasetIndex === 0);
+
+      if (barPoints.length === 1) {
+        onHover?.(barPoints[0].index);
+      } else {
+        onHover?.(-1);
+      }
+    },
+    [onHover, ref],
+  );
+
+  return (
+    <Bar
+      ref={ref as ComponentProps<typeof Bar>['ref']}
+      options={options}
+      data={data}
+      plugins={plugins}
+      style={style}
+      onPointerEnter={() => setHovering?.(true)}
+      onPointerMove={handlePointerMove}
+      onPointerOut={() => setHovering?.(false)}
+    />
+  );
 }
 
 /**
@@ -131,23 +169,20 @@ function computeMovingAverage(
 
 const plugins: Plugin[] = [axisTickPluginFactory()];
 
+function getIsActive({ chart }: { chart: Chart }, index: number): boolean {
+  return chart
+    .getActiveElements()
+    .some((el) => el.datasetIndex === 0 && el.index === index);
+}
+
 const options: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
+  events: [],
   interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: { display: false },
-    tooltip: {
-      enabled: true,
-      callbacks: {
-        label: (ctx: TooltipItem<'bar'>) => {
-          const v = ctx.parsed.y;
-          return v == null ? 'No data' : `${v.toFixed(2)}p/kWh`;
-        },
-      },
-      bodyFont: { size: 16 },
-      titleFont: { size: 14 },
-    },
+    tooltip: { enabled: false },
     title: { display: false },
   },
   scales: {
@@ -161,31 +196,30 @@ const options: ChartOptions<'bar'> = {
         autoSkip: false,
         align: 'center',
         backdropColor: (ctx) => {
-          const pointsIndex = ctx.tick.value;
-          return getPoints(ctx).at(pointsIndex)?.status === 'active'
+          return getIsActive(ctx, ctx.tick.value)
             ? 'rgba(0,120,212,0.95)'
             : undefined;
         },
         showLabelBackdrop: (ctx) => {
-          const pointsIndex = ctx.tick.value;
-          return getPoints(ctx).at(pointsIndex)?.status === 'active';
+          return getIsActive(ctx, ctx.tick.value);
         },
         font: {
           size: (ctx) => {
-            const pointsIndex = ctx.tick.value;
-            return getPoints(ctx).at(pointsIndex)?.status === 'active'
-              ? 14
-              : 12;
+            return getIsActive(ctx, ctx.tick.value) ? 14 : 12;
           },
           weight: (ctx) => {
-            const pointsIndex = ctx.tick.value;
-            return getPoints(ctx).at(pointsIndex)?.status === 'active'
-              ? 700
-              : 400;
+            return getIsActive(ctx, ctx.tick.value) ? 700 : 400;
           },
         },
         callback(_val, index) {
-          return getPoints(this).at(index)?.tickLabel;
+          const points = this.chart.data.datasets[0].data as PricePoint[];
+          const point = index >= 0 ? points.at(index) : undefined;
+          const label = point?.tickLabel;
+          if (label) return label;
+
+          if (getIsActive(this, index)) {
+            return point?.label;
+          }
         },
       },
       grid: { display: false },

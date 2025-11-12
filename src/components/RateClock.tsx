@@ -1,11 +1,5 @@
 // constants used by the plugin are imported where needed inside the plugin file
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  type ComponentProps,
-} from 'react';
+import { useCallback, useMemo, useRef, type ComponentProps } from 'react';
 import type { ChartData, ChartDataset, ChartOptions } from 'chart.js';
 
 import { PolarArea } from 'react-chartjs-2';
@@ -23,6 +17,7 @@ import { addMinutes, setHours, startOfDay } from 'date-fns';
 import { COLORS } from '../lib/constants';
 import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
 import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
+import useActiveChartIndex from '../hooks/useActiveChartIndex';
 
 ChartJS.register(
   PolarAreaController,
@@ -116,6 +111,8 @@ export default function RateClock({
     return [localIndex, mode] as const;
   }, [allPoints, displayGlobalIndex, points]);
 
+  const ref = useActiveChartIndex<ChartJS<'polarArea'>>(displayLocalIndex);
+
   const onLocalIndexHover = useCallback(
     (index: number) => {
       if (onHoverGlobalIndex == null) return;
@@ -174,9 +171,9 @@ export default function RateClock({
   return (
     <>
       <div className="chart-container">
-        <ActiveIndexChart
-          displayIndex={displayLocalIndex}
+        <PolarArea
           data={data}
+          ref={ref as ComponentProps<typeof PolarArea>['ref']}
           options={optionsWithHover}
           plugins={plugins}
           style={{ touchAction: 'pinch-zoom' }}
@@ -189,36 +186,6 @@ export default function RateClock({
       </div>
     </>
   );
-}
-
-function ActiveIndexChart({
-  displayIndex: [activeIndex, chartUpdateMode],
-  ...chartProps
-}: {
-  displayIndex: readonly [number, 'none' | 'default'];
-} & ComponentProps<typeof PolarArea<(number | undefined)[]>>) {
-  const ref = useRef<ChartJS<'polarArea', (number | undefined)[]> | null>(null);
-
-  useEffect(() => {
-    setChartActiveIndex(ref.current, activeIndex, chartUpdateMode);
-  }, [activeIndex, chartUpdateMode]);
-
-  return <PolarArea ref={ref} {...chartProps} />;
-}
-
-function setChartActiveIndex(
-  chart: ChartJS<'polarArea', unknown> | undefined | null,
-  index: number,
-  chartUpdateMode: 'none' | 'default' = 'default',
-) {
-  if (chart == null) return;
-
-  if (index < 0) {
-    chart.setActiveElements([]);
-  } else {
-    chart.setActiveElements([{ datasetIndex: 0, index }]);
-  }
-  chart.update(chartUpdateMode);
 }
 
 // can't go futher with `scales.r.suggestedMax` without a mess
