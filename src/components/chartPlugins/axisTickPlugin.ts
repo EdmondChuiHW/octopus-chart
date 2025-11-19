@@ -18,11 +18,12 @@ export function axisTickPluginFactory(): Plugin<'bar'> {
         .find((el) => el.datasetIndex === 0)?.index;
 
       for (let index = 0; index < points.length; index++) {
-        const x = xScale.getPixelForValue(index - 0.5);
+        const isActive = index === activeIndex;
+        const xAdjust = isActive ? 2 : 0;
+        const x = xScale.getPixelForValue(index - 0.5) + xAdjust;
         const point = points[index];
 
         const isMajor = getMinutes(point.startMs) === 0;
-        const isActive = index === activeIndex;
         const len = isMajor ? 10 : 6;
         ctx.beginPath();
         ctx.strokeStyle = isActive

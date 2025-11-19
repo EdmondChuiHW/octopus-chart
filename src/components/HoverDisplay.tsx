@@ -13,7 +13,7 @@ export default function HoverDisplay({
       return null;
     }
     if (point.status === 'active') {
-      return 'Now';
+      return '(Now)';
     }
 
     if (isToday(point.startMs)) {
