@@ -1,34 +1,34 @@
-import type { Chart, Plugin, ChartDataset } from 'chart.js';
+import type { Chart, Plugin } from 'chart.js';
 import type { PricePoint } from '../../lib/pointUtils';
 import { getMinutes } from 'date-fns';
 
 export function axisTickPluginFactory(): Plugin<'bar'> {
   const plugin: Plugin<'bar'> = {
     id: 'axisTickPlugin',
-    afterDraw: (chart: Chart) => {
+    afterDraw: (c: Chart) => {
+      const chart = c as Chart<'bar', PricePoint[]>;
       const xScale = chart.scales.x;
       const chartBottom = chart.chartArea.bottom;
       const ctx = chart.ctx;
       ctx.save();
 
-      type ExtDs = ChartDataset<'bar', PricePoint[]>;
-      const points = (chart.data.datasets as ExtDs[])[0].data;
+      const points = chart.data.datasets[0].data;
+      const activeIndex = chart
+        .getActiveElements()
+        .find((el) => el.datasetIndex === 0)?.index;
 
-      for (let tickIndex = 0; tickIndex < xScale.ticks.length; tickIndex++) {
-        const x = xScale.getPixelForTick(tickIndex);
-        const pointIndex = xScale.ticks[tickIndex].value;
-
-        const point = points.at(pointIndex);
-        if (!point) continue;
+      for (let index = 0; index < points.length; index++) {
+        const x = xScale.getPixelForValue(index - 0.5);
+        const point = points[index];
 
         const isMajor = getMinutes(point.startMs) === 0;
-        const isActive = point.status === 'active';
-        const len = isMajor ? 8 : 4;
+        const isActive = index === activeIndex;
+        const len = isMajor ? 10 : 6;
         ctx.beginPath();
         ctx.strokeStyle = isActive
           ? 'rgba(0,120,212,0.95)'
           : 'rgba(234,246,255,0.9)';
-        ctx.lineWidth = isActive ? 4 : isMajor ? 1.25 : 1;
+        ctx.lineWidth = isActive ? 4 : isMajor ? 2 : 1;
         ctx.moveTo(x, chartBottom + 0.5);
         ctx.lineTo(x, chartBottom + len + 0.5);
         ctx.stroke();

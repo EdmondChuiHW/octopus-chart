@@ -225,7 +225,7 @@ const options: ChartOptions<'bar'> = {
           display: (ctx) => getActiveIndex(ctx) >= 0,
           xMin: (ctx) => getActiveIndex(ctx),
           xMax: (ctx) => getActiveIndex(ctx),
-          yMin: (ctx) => (getActivePoint(ctx)?.y ?? 0) * 1.1,
+          yMin: (ctx) => (getActivePoint(ctx)?.y ?? 0) * 1,
           borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
           label: {
             display: (ctx) => getActiveIndex(ctx) >= 0,
@@ -246,11 +246,10 @@ const options: ChartOptions<'bar'> = {
     x: {
       // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
       type: 'timeseries',
-
       ticks: {
         color: '#ffffff',
         autoSkip: false,
-        align: 'center',
+        align: 'end',
         callback(_val, index) {
           const points = getPoints(this);
           const point = index >= 0 ? points.at(index) : undefined;
