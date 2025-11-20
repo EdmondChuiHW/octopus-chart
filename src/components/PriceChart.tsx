@@ -19,8 +19,8 @@ import {
   LineController,
   LineElement,
   PointElement,
+  CategoryScale,
 } from 'chart.js';
-import { MyBarScale } from './MyBarScale.ts';
 import useActiveChartIndex from '../hooks/useActiveChartIndex.ts';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { COLORS } from '../lib/constants.ts';
@@ -31,7 +31,7 @@ ChartJS.register(
   Tooltip,
   Title,
   Legend,
-  MyBarScale,
+  CategoryScale,
   LineController,
   LineElement,
   PointElement,
@@ -244,8 +244,7 @@ const options: ChartOptions<'bar'> = {
   },
   scales: {
     x: {
-      // TODO use actual custom ID. Using built-in scale ID to lie to TS lol
-      type: 'timeseries',
+      type: 'category',
       ticks: {
         color: '#ffffff',
         autoSkip: false,
