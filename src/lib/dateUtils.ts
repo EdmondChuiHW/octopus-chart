@@ -1,7 +1,7 @@
-import { format } from 'date-fns';
+import { format, getMinutes } from 'date-fns';
 
-export function formatTimeLocal(date: Date) {
-  if (date.getMinutes() === 0) {
+export function formatTimeLocal(date: Date | number): string {
+  if (getMinutes(date) === 0) {
     return format(date, 'h a');
   }
 

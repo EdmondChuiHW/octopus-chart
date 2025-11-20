@@ -7,6 +7,7 @@ import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 import HoverDisplay from './HoverDisplay';
+import CheapestPeriodList from './CheapestPeriodList';
 
 export default function OctopusCharts() {
   const product = CHART_DATA.DEFAULT_PRODUCT;
@@ -103,6 +104,7 @@ export default function OctopusCharts() {
             setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
           />
         }
+        bestPeriods={<CheapestPeriodList points={points} relativeNow={nowMs} />}
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
         hoverInfo={<HoverDisplay point={displayPoint} />}
       />

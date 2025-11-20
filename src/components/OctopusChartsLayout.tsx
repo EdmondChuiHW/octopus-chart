@@ -6,6 +6,7 @@ export default function OctopusChartsLayout({
   todayPmClock,
   tomorrowAmClock,
   tomorrowPmClock,
+  bestPeriods,
   note,
   hoverInfo,
 }: {
@@ -14,6 +15,7 @@ export default function OctopusChartsLayout({
   todayPmClock: React.ReactNode;
   tomorrowAmClock: React.ReactNode;
   tomorrowPmClock: React.ReactNode;
+  bestPeriods: React.ReactNode;
   note: React.ReactNode;
   hoverInfo?: React.ReactNode;
 }) {
@@ -43,6 +45,13 @@ export default function OctopusChartsLayout({
           <div className="rate-clock">{tomorrowPmClock}</div>
         </div>
       </div>
+
+      {bestPeriods && (
+        <>
+          <h1 id="cheapest">Cheapest periods</h1>
+          <div className="best-periods">{bestPeriods}</div>
+        </>
+      )}
 
       <div className="note">{note}</div>
     </div>

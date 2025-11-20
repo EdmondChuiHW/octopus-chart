@@ -18,10 +18,16 @@ export type PricePoint = {
   startMs: number;
   endMs: number;
   label: string;
+  endLabel: string;
   tickLabel: string | undefined;
   status: PointStatus;
   backgroundColor: string;
   borderColor: string | undefined;
+};
+
+export type Period = {
+  index: number;
+  length: number;
 };
 
 /**
@@ -52,21 +58,20 @@ export function buildPointsData(
 
     const isOnTheHour = p.valid_from.getMinutes() === 0;
 
-    const startStr = formatTimeLocal(p.valid_from);
-    // const endStr = formatTimeLocal(p.valid_to);
-    const label = startStr;
-
     const v = p.value_inc_vat;
     const status = getPointStatus(nowMs, start, end, v);
     const backgroundColor = getBackgroundColorForPoint(status, v, min, max);
     const borderColor = getBorderColorForPoint(status, v, min, max);
+
+    const startStr = formatTimeLocal(p.valid_from);
 
     const datum: PricePoint = {
       x: start,
       y: v,
       startMs: start,
       endMs: end,
-      label,
+      label: startStr,
+      endLabel: formatTimeLocal(p.valid_to),
       tickLabel: isOnTheHour ? startStr : undefined,
       backgroundColor,
       borderColor,

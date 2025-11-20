@@ -11,6 +11,7 @@ export default function OctopusChartsPlaceholder() {
         todayPmClock={<div className="chart-container"></div>}
         tomorrowAmClock={<div className="chart-container"></div>}
         tomorrowPmClock={<div className="chart-container"></div>}
+        bestPeriods={<div className="chart-container"></div>}
         note={null}
       />
     </>
