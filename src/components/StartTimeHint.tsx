@@ -1,11 +1,7 @@
 import { add, formatDuration, isAfter, sub, type Duration } from 'date-fns';
 import { useMemo } from 'react';
 import { formatTimeLocal } from '../lib/dateUtils';
-
-export type Timer = {
-  mode: 'starts-in' | 'ends-in';
-  duration: Duration;
-};
+import type { Timer } from '../lib/types';
 
 export type Props = {
   relativeNow: Date | number;
@@ -35,9 +31,16 @@ export default function StartTimeHint({
     });
   }, [relativeNow, startMs, duration, timers]);
 
+  if (startMs < 0) {
+    return <>Best start time unavailable. Start anytime.</>;
+  }
+
   if (choices.length === 0) {
     return (
-      <>No timers available. Start manually at {formatTimeLocal(startMs)}</>
+      <>
+        No timers applicable. Start manually at{' '}
+        <b>{formatTimeLocal(startMs)}</b>
+      </>
     );
   }
 

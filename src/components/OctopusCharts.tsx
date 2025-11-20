@@ -4,10 +4,40 @@ import PriceChart from './PriceChart';
 import RateClock from './RateClock';
 import { buildPointsData } from '../lib/pointUtils';
 import { CHART_DATA, TIMINGS } from '../lib/constants';
-import { addDays } from 'date-fns';
+import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 import HoverDisplay from './HoverDisplay';
 import CheapestPeriodList from './CheapestPeriodList';
+import ConsumerList from './ConsumerList';
+import type { ConsumerConfig } from '../lib/types';
+import { findLowestPeriod } from '../lib/priceUtils';
+import { millisecondsInHour } from 'date-fns/constants';
+
+const CONSUMERS: ConsumerConfig[] = [
+  {
+    name: 'Washer',
+    duration: { hours: 1, minutes: 30 },
+    timers: [
+      { mode: 'ends-in', duration: { hours: 3 } },
+      { mode: 'ends-in', duration: { hours: 6 } },
+      { mode: 'ends-in', duration: { hours: 9 } },
+    ],
+  },
+  {
+    name: 'Dishwasher',
+    duration: { hours: 2 },
+    timers: [
+      { mode: 'starts-in', duration: { minutes: 30 } },
+      { mode: 'starts-in', duration: { hours: 1 } },
+      { mode: 'starts-in', duration: { hours: 3 } },
+      { mode: 'starts-in', duration: { hours: 3, minutes: 30 } },
+      { mode: 'starts-in', duration: { hours: 6 } },
+      { mode: 'starts-in', duration: { hours: 6, minutes: 30 } },
+      { mode: 'starts-in', duration: { hours: 9 } },
+      { mode: 'starts-in', duration: { hours: 9, minutes: 30 } },
+    ],
+  },
+];
 
 export default function OctopusCharts() {
   const product = CHART_DATA.DEFAULT_PRODUCT;
@@ -51,6 +81,22 @@ export default function OctopusCharts() {
   const displayPoint = useMemo(
     () => (displayIndex[0] < 0 ? undefined : points.at(displayIndex[0])),
     [points, displayIndex],
+  );
+
+  const consumers = useMemo(
+    () =>
+      CONSUMERS.map((config) => {
+        const afterNow = points.filter((p) => isAfter(p.startMs, nowMs));
+        const targetLength = Math.ceil(
+          milliseconds(config.duration) / millisecondsInHour / 0.5, // half-hourly points
+        );
+        const index = findLowestPeriod(afterNow, (p) => p.y, targetLength);
+        return {
+          config,
+          bestStartTimePoints: afterNow.slice(index, index + targetLength),
+        };
+      }),
+    [nowMs, points],
   );
 
   return (
@@ -104,7 +150,16 @@ export default function OctopusCharts() {
             setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
           />
         }
-        bestPeriods={<CheapestPeriodList points={points} relativeNow={nowMs} />}
+        bestPeriods={
+          <>
+            <ConsumerList
+              relativeNow={nowMs}
+              consumers={consumers}
+              points={points}
+            />
+            <CheapestPeriodList points={points} relativeNow={nowMs} />
+          </>
+        }
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
         hoverInfo={<HoverDisplay point={displayPoint} />}
       />

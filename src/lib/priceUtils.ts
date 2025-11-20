@@ -3,6 +3,9 @@ export function findLowestPeriod<E>(
   getValue: (point: E) => number,
   targetLength: number,
 ): number {
+  if (!Number.isInteger(targetLength)) {
+    throw new TypeError(`targetLength must be an integer. Got ${targetLength}`);
+  }
   if (targetLength <= 0 || points.length <= 0) return -1;
   if (points.length < targetLength) return 0;
 
