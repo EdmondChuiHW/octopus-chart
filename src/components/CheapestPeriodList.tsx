@@ -3,7 +3,6 @@ import type { Period, PricePoint } from '../lib/pointUtils';
 import { findLowestPeriod } from '../lib/priceUtils';
 import CheapestPeriod from './CheapestPeriod';
 import { useMemo } from 'react';
-import StartTimeHint from './StartTimeHint';
 
 export type Props = {
   points: PricePoint[];
@@ -41,7 +40,7 @@ export default function CheapestPeriodList({
         <div style={{ marginBottom: '2em' }} key={diffInHours}>
           <h2>{formattedDuration}</h2>
           <CheapestPeriod key={diffInHours} points={points} period={period} />
-          {points[period.index] && (
+          {/* {points[period.index] && (
             <StartTimeHint
               relativeNow={relativeNow}
               startMs={startPoint.startMs}
@@ -61,7 +60,7 @@ export default function CheapestPeriodList({
                 { mode: 'ends-in', duration: { hours: 9 } },
               ]}
             />
-          )}
+          )} */}
         </div>
       );
     });

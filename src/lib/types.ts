@@ -19,6 +19,11 @@ export type Timer = {
   duration: Duration;
 };
 
+export type TimerChoice = {
+  timer: Timer;
+  setTime: Date;
+};
+
 export type ConsumerConfig = {
   name: string;
   duration: Duration;
