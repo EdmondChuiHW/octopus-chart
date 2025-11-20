@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import type { Period, PricePoint } from '../lib/pointUtils';
-import { formatDuration, intervalToDuration } from 'date-fns';
 
 export type Props = {
   points: PricePoint[];
@@ -30,11 +29,8 @@ export default function CheapestPeriod({ points, period }: Props) {
 
   return (
     <div>
-      <b>{startPoint.label}</b>–{endPoint.endLabel} (
-      {formatDuration(
-        intervalToDuration({ start: startPoint.startMs, end: endPoint.endMs }),
-      )}
-      ) Avg {periodAvg.toFixed(2)}p/kWh
+      Avg <b>{periodAvg.toFixed(2)}</b>p/kWh {startPoint.label}–
+      {endPoint.endLabel}
     </div>
   );
 }

@@ -2,10 +2,12 @@ import type { ConsumerConfig, TimerChoice } from '../lib/types';
 import StartTimeHint from './StartTimeHint';
 import type { PricePoint } from '../lib/pointUtils';
 import CheapestPeriod from './CheapestPeriod';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { timerSetTimeMs } from '../lib/timerUtils';
-import { isAfter } from 'date-fns';
+import { formatDuration, isAfter } from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
+
+import './Consumer.css';
 
 export type Props = {
   config: ConsumerConfig;
@@ -37,23 +39,31 @@ export default function Consumer({
       .sort((a, b) => a.setTime.getTime() - b.setTime.getTime());
   }, [relativeNow, startMs, duration, timers]);
 
+  const [choiceIndex, setChoiceIndex] = useState(0);
+
   return (
-    <>
+    <div className="consumer">
       <h2>{name}</h2>
+      <small>Run time: {formatDuration(config.duration)}</small>
       <CheapestPeriod
         points={points}
         period={{ index: 0, length: points.length }}
       />
-      <StartTimeHint choices={choices} startMs={startMs} />
+      <StartTimeHint
+        choices={choices}
+        startMs={startMs}
+        selectedChoiceIndex={choiceIndex}
+        onChoiceChange={setChoiceIndex}
+      />
 
-      {choices[0] && (
+      {choices[choiceIndex] && (
         <StartTimeHintChart
           relativeNow={relativeNow}
-          choice={choices[0]}
+          choice={choices[choiceIndex]}
           consumer={config}
           periodPoints={points}
         />
       )}
-    </>
+    </div>
   );
 }

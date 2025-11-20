@@ -7,7 +7,6 @@ import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 import HoverDisplay from './HoverDisplay';
-import CheapestPeriodList from './CheapestPeriodList';
 import ConsumerList from './ConsumerList';
 import type { ConsumerConfig } from '../lib/types';
 import { findLowestPeriod } from '../lib/priceUtils';
@@ -15,7 +14,7 @@ import { millisecondsInHour } from 'date-fns/constants';
 
 const CONSUMERS: ConsumerConfig[] = [
   {
-    name: 'Washer Power Wash 60',
+    name: 'Washer [Power Wash 60]',
     duration: { hours: 1, minutes: 0 },
     timers: [
       { mode: 'ends-in', duration: { hours: 2 } },
@@ -32,7 +31,7 @@ const CONSUMERS: ConsumerConfig[] = [
     ],
   },
   {
-    name: 'Washer Cotton Eco',
+    name: 'Washer [Cotton Eco]',
     duration: { hours: 2, minutes: 25 },
     timers: [
       { mode: 'ends-in', duration: { hours: 3 } },
@@ -51,7 +50,7 @@ const CONSUMERS: ConsumerConfig[] = [
     name: 'Dishwasher',
     duration: { hours: 3 },
     timers: [
-      { mode: 'starts-in', duration: { minutes: 30 } },
+      // { mode: 'starts-in', duration: { minutes: 30 } },
       { mode: 'starts-in', duration: { hours: 3 } },
       { mode: 'starts-in', duration: { hours: 3, minutes: 30 } },
       { mode: 'starts-in', duration: { hours: 6 } },
@@ -174,14 +173,11 @@ export default function OctopusCharts() {
           />
         }
         bestPeriods={
-          <>
-            <ConsumerList
-              relativeNow={nowMs}
-              consumers={consumers}
-              points={points}
-            />
-            <CheapestPeriodList points={points} relativeNow={nowMs} />
-          </>
+          <ConsumerList
+            relativeNow={nowMs}
+            consumers={consumers}
+            points={points}
+          />
         }
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
         hoverInfo={<HoverDisplay point={displayPoint} />}

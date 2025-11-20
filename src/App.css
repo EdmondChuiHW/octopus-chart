@@ -5,6 +5,7 @@
   padding: clamp(0.75rem, 2.5vw, 1.5rem);
   min-height: 100vh;
   box-sizing: border-box;
+  font-size: 1.1rem;
 }
 .subtitle {
   color: #d6f1ff;

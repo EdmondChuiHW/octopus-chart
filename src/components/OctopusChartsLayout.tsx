@@ -48,7 +48,7 @@ export default function OctopusChartsLayout({
 
       {bestPeriods && (
         <>
-          <h1 id="cheapest">Cheapest periods</h1>
+          <h1 id="cheapest">Best periods</h1>
           <div className="best-periods">{bestPeriods}</div>
         </>
       )}

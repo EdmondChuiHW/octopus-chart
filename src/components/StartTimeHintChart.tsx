@@ -169,6 +169,7 @@ const chartOptions: ChartOptions<'line'> = {
   layout: {
     padding: { left: 12, right: 12, top: 0, bottom: 0 },
   },
+  events: [],
   elements: {
     point: {
       backgroundColor: (ctx, options) =>
@@ -185,6 +186,7 @@ const chartOptions: ChartOptions<'line'> = {
       type: 'time',
       ticks: { display: false },
       offset: true,
+      display: false,
     },
     y: { display: false, max: 1.5 },
   },
@@ -203,13 +205,14 @@ const chartOptions: ChartOptions<'line'> = {
           yMin: 0,
           yMax: 1,
           label: {
+            z: 1,
             content: (ctx) => getTimeLabel(ctx, DATASET_INDEXES.SET_TIME_LINE),
             display: true,
             position: 'end',
             backgroundColor: COLORS.PRIMARY_BLUE,
             color: '#ffffff',
             font: {
-              size: 14,
+              size: 16,
               weight: 'bold',
             },
           },
@@ -223,7 +226,7 @@ const chartOptions: ChartOptions<'line'> = {
           position: 'center',
           color: COLORS.PRIMARY_BLUE,
           font: {
-            size: 12,
+            size: 16,
             weight: 'bold',
           },
         },
@@ -243,10 +246,11 @@ const chartOptions: ChartOptions<'line'> = {
               getTimeLabel(ctx, DATASET_INDEXES.START_TIME_LINE),
             position: 'end',
             borderColor: periodColor,
+            backgroundColor: 'black',
             borderWidth: 2,
             color: '#ffffff',
             font: {
-              size: 14,
+              size: 16,
               weight: 'bold',
             },
           },
@@ -260,7 +264,7 @@ const chartOptions: ChartOptions<'line'> = {
           position: 'center',
           color: periodColor,
           font: {
-            size: 12,
+            size: 16,
             weight: 'bold',
           },
         },
@@ -281,8 +285,9 @@ const chartOptions: ChartOptions<'line'> = {
             borderColor: endColor,
             borderWidth: 2,
             color: '#ffffff',
+            backgroundColor: 'black',
             font: {
-              size: 14,
+              size: 16,
               weight: 'bold',
             },
           },
@@ -296,7 +301,7 @@ const chartOptions: ChartOptions<'line'> = {
           position: 'center',
           color: endColor,
           font: {
-            size: 12,
+            size: 16,
             weight: 'bold',
           },
         },
