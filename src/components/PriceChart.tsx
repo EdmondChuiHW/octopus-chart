@@ -68,27 +68,9 @@ export default function PriceChart({
       },
     };
 
-    // compute 3-hour moving average (include current point and previous points within 3 hours)
-    const movingAvg = computeMovingAverage(points, 3 * 60 * 60 * 1000);
-
-    const maDataset = {
-      type: 'line',
-      label: '3h MA',
-      data: movingAvg,
-      order: 1,
-      borderColor: 'rgba(255,255,255,0.9)',
-      borderWidth: 2,
-      tension: 0.25,
-      pointRadius: 0,
-      yAxisID: 'y',
-    } as ChartDataset<'line', (number | undefined)[]>;
-
     return {
       labels: points.map((d) => d.label),
-      datasets: [
-        dataset,
-        maDataset as unknown as ChartDataset<'bar', PricePoint[]>,
-      ],
+      datasets: [dataset],
     };
   }, [points]);
 
@@ -136,45 +118,6 @@ export default function PriceChart({
       onPointerOut={() => setHovering?.(false)}
     />
   );
-}
-
-/**
- * Compute moving average over a sliding time window (in ms).
- * For each point i, average y-values of points with startMs >= points[i].startMs - windowMs + 1 and <= points[i].startMs
- */
-function computeMovingAverage(
-  points: PricePoint[],
-  windowMs: number,
-): (number | undefined)[] {
-  const n = points.length;
-  const out: (number | undefined)[] = Array<number | undefined>(n);
-  if (n === 0) return out;
-
-  // Forward-looking sliding window: for each index i, average points with
-  // startMs in [points[i].startMs, points[i].startMs + windowMs)
-  let right = 0;
-  let sum = 0;
-
-  for (let i = 0; i < n; i++) {
-    // remove the previous element from sum (we want window starting at i)
-    if (i > 0) {
-      sum -= points[i - 1].y;
-    }
-
-    // ensure right is at least i
-    if (right < i) right = i;
-
-    const windowEnd = points[i].startMs + windowMs - 1;
-    while (right < n && points[right].startMs <= windowEnd) {
-      sum += points[right].y;
-      right++;
-    }
-
-    const count = right - i;
-    out[i] = count > 0 ? sum / count : undefined;
-  }
-
-  return out;
 }
 
 const plugins: Plugin[] = [axisTickPluginFactory()];
