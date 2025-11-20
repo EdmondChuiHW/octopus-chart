@@ -15,20 +15,43 @@ import { millisecondsInHour } from 'date-fns/constants';
 
 const CONSUMERS: ConsumerConfig[] = [
   {
-    name: 'Washer',
-    duration: { hours: 1, minutes: 30 },
+    name: 'Washer Power Wash 60',
+    duration: { hours: 1, minutes: 0 },
+    timers: [
+      { mode: 'ends-in', duration: { hours: 2 } },
+      { mode: 'ends-in', duration: { hours: 3 } },
+      { mode: 'ends-in', duration: { hours: 4 } },
+      { mode: 'ends-in', duration: { hours: 5 } },
+      { mode: 'ends-in', duration: { hours: 6 } },
+      { mode: 'ends-in', duration: { hours: 7 } },
+      { mode: 'ends-in', duration: { hours: 8 } },
+      { mode: 'ends-in', duration: { hours: 9 } },
+      { mode: 'ends-in', duration: { hours: 10 } },
+      { mode: 'ends-in', duration: { hours: 11 } },
+      { mode: 'ends-in', duration: { hours: 12 } },
+    ],
+  },
+  {
+    name: 'Washer Cotton Eco',
+    duration: { hours: 2, minutes: 25 },
     timers: [
       { mode: 'ends-in', duration: { hours: 3 } },
+      { mode: 'ends-in', duration: { hours: 4 } },
+      { mode: 'ends-in', duration: { hours: 5 } },
       { mode: 'ends-in', duration: { hours: 6 } },
+      { mode: 'ends-in', duration: { hours: 7 } },
+      { mode: 'ends-in', duration: { hours: 8 } },
       { mode: 'ends-in', duration: { hours: 9 } },
+      { mode: 'ends-in', duration: { hours: 10 } },
+      { mode: 'ends-in', duration: { hours: 11 } },
+      { mode: 'ends-in', duration: { hours: 12 } },
     ],
   },
   {
     name: 'Dishwasher',
-    duration: { hours: 2 },
+    duration: { hours: 3 },
     timers: [
       { mode: 'starts-in', duration: { minutes: 30 } },
-      { mode: 'starts-in', duration: { hours: 1 } },
       { mode: 'starts-in', duration: { hours: 3 } },
       { mode: 'starts-in', duration: { hours: 3, minutes: 30 } },
       { mode: 'starts-in', duration: { hours: 6 } },
