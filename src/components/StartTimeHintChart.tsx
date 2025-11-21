@@ -7,9 +7,9 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { Line } from 'react-chartjs-2';
-import type { ConsumerConfig, TimerChoice } from '../lib/types';
+import type { ConsumerConfig, Timer, TimerChoice } from '../lib/types';
 import { useMemo } from 'react';
-import { add, getTime } from 'date-fns';
+import { add, formatDuration, getTime, intervalToDuration } from 'date-fns';
 import { timerStartTimeMs } from '../lib/timerUtils';
 import type { PricePoint } from '../lib/pointUtils';
 
@@ -46,7 +46,7 @@ export default function StartTimeHintChart({
     ).getTime();
     const endTime = add(startTime, consumer.duration).getTime();
 
-    const datasets = Array(3) as ChartData<'line'>['datasets'];
+    const datasets = [] as ChartData<'line'>['datasets'];
     datasets[DATASET_INDEXES.NOW_LINE] = {
       order: DATASET_INDEXES.NOW_LINE * -1,
       borderColor: COLORS.PRIMARY_BLUE,
@@ -90,6 +90,31 @@ export default function StartTimeHintChart({
         },
       ],
     };
+    const timerEndTime = (() => {
+      switch (choice.timer.mode) {
+        case 'starts-in':
+          return startTime;
+        case 'ends-in':
+          return endTime;
+        default:
+          throw new Error(
+            `Unknown timer mode: ${choice.timer.mode satisfies never}`,
+          );
+      }
+    })();
+    datasets[DATASET_INDEXES.TIMER_LINE] = {
+      hidden: true,
+      data: [
+        {
+          x: setTime,
+          y: 3,
+        },
+        {
+          x: timerEndTime,
+          y: 3,
+        },
+      ],
+    };
 
     if (showPeriod && periodPoints?.length) {
       // lol TS is so dumb
@@ -114,7 +139,17 @@ export default function StartTimeHintChart({
       };
     }
 
-    return { datasets };
+    const labels = [
+      relativeNow,
+      startTime,
+      endTime,
+      setTime, // last so it can draw over others
+    ];
+
+    return {
+      datasets,
+      labels,
+    };
   }, [
     choice.setTime,
     choice.timer,
@@ -135,7 +170,8 @@ const DATASET_INDEXES = {
   NOW_LINE: 0,
   SET_TIME_LINE: 1,
   START_TIME_LINE: 2,
-  PERIOD_LINE: 3,
+  TIMER_LINE: 3,
+  PERIOD_LINE: 4,
 } as const;
 
 function getDataset(ctx: { chart: ChartJS }, datasetIndex: number): Point[] {
@@ -150,13 +186,16 @@ function getTimeMs(
   return getDataset(ctx, datasetIndex).at(index ?? 0)?.x ?? -1;
 }
 
-function getTimeLabel(
-  ctx: { chart: ChartJS },
-  datasetIndex: number,
-  index?: number,
-): string {
-  const setTime = getTimeMs(ctx, datasetIndex, index);
-  return setTime < 0 ? '' : formatTimeLocal(setTime);
+function getTimerMode(ctx: { chart: ChartJS }): Timer['mode'] {
+  const startTime = getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1);
+  if (startTime === getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE)) {
+    return 'starts-in';
+  }
+  if (startTime === getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1)) {
+    return 'ends-in';
+  }
+
+  throw new Error('Unable to determine timer mode');
 }
 
 const periodColor = rateToColor(0, 0, 1);
@@ -164,11 +203,9 @@ const endColor = rateToColor(1, 0, 1);
 
 const chartOptions: ChartOptions<'line'> = {
   parsing: false,
+  normalized: true,
   borderColor: COLORS.PRIMARY_BLUE,
   maintainAspectRatio: false,
-  layout: {
-    padding: { left: 12, right: 12, top: 0, bottom: 0 },
-  },
   events: [],
   elements: {
     point: {
@@ -184,11 +221,44 @@ const chartOptions: ChartOptions<'line'> = {
   scales: {
     x: {
       type: 'time',
-      ticks: { display: false },
       offset: true,
-      display: false,
+      ticks: {
+        source: 'labels',
+        callback: formatTimeLocal,
+        minRotation: 30,
+        autoSkip: false,
+        font: {
+          size: (ctx) => {
+            const thisTime = ctx.tick.value;
+            return thisTime === getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE)
+              ? 14
+              : 12;
+          },
+          weight: 'bold',
+        },
+        color: (ctx) => {
+          const thisTime = ctx.tick.value;
+          if (thisTime === getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE)) {
+            return periodColor;
+          }
+          if (
+            thisTime === getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1)
+          ) {
+            return endColor;
+          }
+
+          return COLORS.HOUR_LABEL;
+        },
+        showLabelBackdrop: (ctx) => {
+          const thisTime = ctx.tick.value;
+          return thisTime === getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE);
+        },
+        backdropPadding: 4,
+        backdropColor: COLORS.PRIMARY_BLUE,
+      },
+      grid: { display: false },
     },
-    y: { display: false, max: 1.5 },
+    y: { display: false, max: 3.8 },
   },
   plugins: {
     legend: { display: false },
@@ -203,31 +273,18 @@ const chartOptions: ChartOptions<'line'> = {
           borderWidth: 4,
           display: true,
           yMin: 0,
-          yMax: 1,
+          yMax: 3,
           label: {
             z: 1,
-            content: (ctx) => getTimeLabel(ctx, DATASET_INDEXES.SET_TIME_LINE),
+            content: 'Set',
             display: true,
-            position: 'end',
+            position: 'start',
             backgroundColor: COLORS.PRIMARY_BLUE,
             color: '#ffffff',
             font: {
-              size: 16,
+              size: 12,
               weight: 'bold',
             },
-          },
-        },
-        setTimeLabel: {
-          type: 'label',
-          xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE),
-          content: 'Set',
-          yValue: -0.6,
-          display: true,
-          position: 'center',
-          color: COLORS.PRIMARY_BLUE,
-          font: {
-            size: 16,
-            weight: 'bold',
           },
         },
         startTimeLine: {
@@ -239,32 +296,30 @@ const chartOptions: ChartOptions<'line'> = {
           borderWidth: 4,
           display: true,
           yMin: 0,
-          yMax: 1,
-          label: {
-            display: true,
-            content: (ctx) =>
-              getTimeLabel(ctx, DATASET_INDEXES.START_TIME_LINE),
-            position: 'end',
-            borderColor: periodColor,
-            backgroundColor: 'black',
-            borderWidth: 2,
-            color: '#ffffff',
-            font: {
-              size: 16,
-              weight: 'bold',
-            },
+          yMax: (ctx) => {
+            const mode = getTimerMode(ctx);
+            switch (mode) {
+              case 'starts-in':
+                return 3;
+              case 'ends-in':
+                return 2;
+              default:
+                throw new Error(`Unknown timer mode: ${mode satisfies never}`);
+            }
           },
         },
         startTimeLabel: {
           type: 'label',
-          xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE),
           content: 'Start',
-          yValue: -0.6,
-          display: true,
-          position: 'center',
-          color: periodColor,
+          xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE),
+          yValue: 1.875,
+          borderColor: periodColor,
+          backgroundColor: 'black',
+          borderWidth: 2,
+          borderRadius: 6,
+          color: '#ffffff',
           font: {
-            size: 16,
+            size: 12,
             weight: 'bold',
           },
         },
@@ -272,37 +327,78 @@ const chartOptions: ChartOptions<'line'> = {
           type: 'line',
           xMin: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
           xMax: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
+          drawTime: 'beforeDatasetsDraw',
           borderColor: endColor,
           borderWidth: 4,
           display: true,
           yMin: 0,
-          yMax: 1,
-          label: {
-            display: true,
-            content: (ctx) =>
-              getTimeLabel(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
-            position: 'end',
-            borderColor: endColor,
-            borderWidth: 2,
-            color: '#ffffff',
-            backgroundColor: 'black',
-            font: {
-              size: 16,
-              weight: 'bold',
-            },
+          yMax: (ctx) => {
+            const mode = getTimerMode(ctx);
+            switch (mode) {
+              case 'starts-in':
+                return 2;
+              case 'ends-in':
+                return 3;
+              default:
+                throw new Error(`Unknown timer mode: ${mode satisfies never}`);
+            }
           },
         },
         endTimeLabel: {
           type: 'label',
-          xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
           content: 'End',
-          yValue: -0.6,
-          display: true,
-          position: 'center',
-          color: endColor,
+          xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
+          yValue: 1.875,
+          borderColor: endColor,
+          position: {
+            x: 'end',
+            y: 'center',
+          },
+          backgroundColor: 'black',
+          borderWidth: 2,
+          borderRadius: 6,
+          color: '#ffffff',
           font: {
-            size: 16,
+            size: 12,
             weight: 'bold',
+          },
+        },
+        timerLine: {
+          type: 'line',
+          borderColor: (ctx) => {
+            const mode = getTimerMode(ctx);
+            switch (mode) {
+              case 'starts-in':
+                return periodColor;
+              case 'ends-in':
+                return endColor;
+              default:
+                throw new Error(`Unknown timer mode: ${mode satisfies never}`);
+            }
+          },
+          borderWidth: 4,
+          borderDash: [4, 2],
+          yMin: 3,
+          yMax: 3,
+          xMin: (ctx) => getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE),
+          xMax: (ctx) => getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1),
+          adjustScaleRange: true,
+          label: {
+            display: true,
+            content: (ctx) => {
+              const timerDuration = intervalToDuration({
+                start: getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE),
+                end: getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1),
+              });
+              return formatDuration(timerDuration);
+            },
+            position: 'center',
+            color: 'white',
+            backgroundColor: COLORS.PRIMARY_BLUE,
+            padding: { x: 8, y: 2 },
+            font: {
+              size: 14,
+            },
           },
         },
       },

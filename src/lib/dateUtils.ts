@@ -1,6 +1,6 @@
-import { format, getMinutes } from 'date-fns';
+import { format, getMinutes, type DateArg } from 'date-fns';
 
-export function formatTimeLocal(date: Date | number): string {
+export function formatTimeLocal(date: DateArg<Date>): string {
   if (getMinutes(date) === 0) {
     return format(date, 'haaa');
   }

@@ -63,7 +63,18 @@ export default function StartTimeHint({
 
 function TimerHint({ choice }: { choice: TimerChoice }) {
   const setTimeStr = formatTimeLocal(choice.setTime);
-  const modeStr = choice.timer.mode === 'starts-in' ? 'start' : 'end';
+  const modeStr = (() => {
+    switch (choice.timer.mode) {
+      case 'starts-in':
+        return 'start';
+      case 'ends-in':
+        return 'end';
+      default:
+        throw new Error(
+          `Unknown timer mode: ${choice.timer.mode satisfies never}`,
+        );
+    }
+  })();
   return (
     <>
       At <b>{setTimeStr}</b>, set to <b>{modeStr}</b> in{' '}
