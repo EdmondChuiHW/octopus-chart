@@ -25,7 +25,7 @@ export const NUM = {
 } as const;
 
 export const COLORS = {
-  PRIMARY_BLUE: 'rgba(0,120,212,0.95)',
+  PRIMARY_BLUE: 'rgba(0,120,212,1)',
   PRIMARY_BLUE_FADED: 'rgba(0,120,212,0.28)',
   NO_DATA_BG: 'rgba(30,30,30,0.6)',
   BORDER_LIGHT: 'rgba(0,0,0,0.12)',
