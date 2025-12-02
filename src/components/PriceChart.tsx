@@ -172,10 +172,16 @@ const options: ChartOptions<'bar'> = {
           borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
           label: {
             display: (ctx) => getActiveIndex(ctx) >= 0,
-            content: (ctx) => getActivePoint(ctx)?.label ?? '',
+            content: (ctx) => {
+              const p = getActivePoint(ctx);
+              if (!p) return '';
+
+              return [p.label, `${p.y.toFixed(2)}p/kWh`];
+            },
             position: 'end',
             backgroundColor: COLORS.PRIMARY_BLUE,
             color: '#ffffff',
+            yAdjust: -6,
             font: {
               size: 14,
               weight: 'bold',
