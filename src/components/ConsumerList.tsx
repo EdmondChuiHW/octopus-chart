@@ -1,9 +1,9 @@
 import type { PricePoint } from '../lib/pointUtils';
-import type { ConsumerConfig } from '../lib/types';
+import type { ConsumerBestTimes } from '../lib/types';
 import Consumer from './Consumer';
 
 export type Props = {
-  consumers: { config: ConsumerConfig; bestStartTimePoints: PricePoint[] }[];
+  consumers: ConsumerBestTimes[];
   relativeNow: Date | number;
   points: PricePoint[];
 };

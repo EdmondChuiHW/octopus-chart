@@ -130,6 +130,7 @@ export default function OctopusCharts() {
           <PriceChart
             points={points}
             displayIndex={displayIndex}
+            consumerBestTimes={consumers}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
           />

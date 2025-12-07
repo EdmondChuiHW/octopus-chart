@@ -1,4 +1,11 @@
-import { format, getMinutes, type DateArg } from 'date-fns';
+import {
+  format,
+  getMinutes,
+  type DateArg,
+  type Duration,
+  type FormatDistanceFn,
+  type FormatDistanceToken,
+} from 'date-fns';
 
 export function formatTimeLocal(date: DateArg<Date>): string {
   if (getMinutes(date) === 0) {
@@ -6,4 +13,27 @@ export function formatTimeLocal(date: DateArg<Date>): string {
   }
 
   return format(date, 'h:mmaaa');
+}
+
+import { formatDuration } from 'date-fns';
+
+const formatDistanceLocale: { [K in FormatDistanceToken]?: string } = {
+  xMinutes: '{{count}}m',
+  xHours: '{{count}}h',
+};
+
+const shortFormatDistance: FormatDistanceFn = (token, count) => {
+  const template = formatDistanceLocale[token];
+  if (!template) {
+    throw new Error(`Unsupported token: ${token}`);
+  }
+  return template.replace('{{count}}', String(count));
+};
+
+export function formatShortDurationHoursMinsOnly(duration: Duration): string {
+  return formatDuration(duration, {
+    format: ['hours', 'minutes'],
+    delimiter: '',
+    locale: { formatDistance: shortFormatDistance },
+  });
 }

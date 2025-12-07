@@ -1,5 +1,6 @@
 import type { Duration } from 'date-fns';
 import { z } from 'zod';
+import type { PricePoint } from './pointUtils';
 
 export const ApiPricePointSchema = z.object({
   value_exc_vat: z.number(),
@@ -28,4 +29,9 @@ export type ConsumerConfig = {
   name: string;
   duration: Duration;
   timers: Timer[];
+};
+
+export type ConsumerBestTimes = {
+  config: ConsumerConfig;
+  bestStartTimePoints: PricePoint[];
 };
