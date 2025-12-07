@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import type { PricePoint } from '../lib/pointUtils';
 import './HoverDisplay.css';
-import { isToday, isTomorrow } from 'date-fns';
+import { formatDuration, isToday, isTomorrow, type Duration } from 'date-fns';
 
 export default function HoverDisplay({
   point,
+  bestDuration,
 }: {
   point: PricePoint | undefined;
+  bestDuration?: Duration;
 }) {
   const title = useMemo(() => {
     if (!point) {
@@ -32,6 +34,19 @@ export default function HoverDisplay({
       {title && <span>{title} </span>}
       <span>{point?.label ?? '–'}</span>:{' '}
       <span className="rate">{point?.y.toFixed(2) ?? '–'}p/kWh</span>
+      <BestNext duration={bestDuration} />
+    </div>
+  );
+}
+
+function BestNext({ duration }: { duration?: Duration }) {
+  if (!duration) {
+    return <div className="best-next">&nbsp;</div>;
+  }
+
+  return (
+    <div className="best-next">
+      Average best rate for the next {formatDuration(duration)}.
     </div>
   );
 }

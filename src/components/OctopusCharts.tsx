@@ -121,6 +121,17 @@ export default function OctopusCharts() {
     [nowMs, points],
   );
 
+  const hoverBestTimeDuration = useMemo(() => {
+    if (!displayPoint) return undefined;
+
+    const firstBestDuration = consumers.find(
+      ({ bestStartTimePoints }) =>
+        bestStartTimePoints[0]?.startMs === displayPoint.startMs,
+    )?.config.duration;
+
+    return firstBestDuration;
+  }, [consumers, displayPoint]);
+
   useResizeChartsOnOrientationChange();
 
   return (
@@ -183,7 +194,12 @@ export default function OctopusCharts() {
           />
         }
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
-        hoverInfo={<HoverDisplay point={displayPoint} />}
+        hoverInfo={
+          <HoverDisplay
+            point={displayPoint}
+            bestDuration={hoverBestTimeDuration}
+          />
+        }
       />
     </>
   );

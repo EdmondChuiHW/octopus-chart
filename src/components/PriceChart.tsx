@@ -92,7 +92,7 @@ export default function PriceChart({
         const best = bestStartTimePoints[0];
         return {
           ...best,
-          label: `Best rate for next ${formatShortDurationHoursMinsOnly(config.duration)}`,
+          label: `Best: ${formatShortDurationHoursMinsOnly(config.duration)}`,
         };
       }),
     };
@@ -135,7 +135,7 @@ export default function PriceChart({
         yMax: point.y,
         borderRadius: 6,
         content: (ctx) =>
-          getActiveIndex(ctx) === categoryIndex ? point.label : '➔',
+          getActiveIndex(ctx) === categoryIndex ? point.label : '●',
         z: (ctx) => (getActiveIndex(ctx) === categoryIndex ? 1 : 0),
         position: {
           x: 'center',
@@ -144,7 +144,7 @@ export default function PriceChart({
         yAdjust: (ctx) => (getActiveIndex(ctx) === categoryIndex ? -24 : 0),
         padding: (ctx) => (getActiveIndex(ctx) === categoryIndex ? 6 : 0),
         font: {
-          size: 14,
+          size: 16,
           weight: 'bold',
         },
         backgroundColor: (ctx) =>
@@ -260,7 +260,8 @@ function makeOptions() {
             display: (ctx) => getActiveIndex(ctx) >= 0,
             xMin: (ctx) => getActiveIndex(ctx),
             xMax: (ctx) => getActiveIndex(ctx),
-            yMin: (ctx) => (getActivePoint(ctx)?.y ?? 0) * 1,
+            yMin: (ctx) => getActivePoint(ctx)?.y ?? 0,
+            // TODO: fix yMax protruding beyond label border radius
             borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
             label: {
               display: (ctx) => getActiveIndex(ctx) >= 0,
@@ -276,7 +277,7 @@ function makeOptions() {
               yAdjust: -6,
               padding: 6,
               font: {
-                size: 14,
+                size: 16,
                 weight: 'bold',
               },
             },
@@ -289,7 +290,7 @@ function makeOptions() {
         type: 'category',
         ticks: {
           color: '#ffffff',
-          autoSkip: false,
+          autoSkip: true,
           align: 'end',
           callback(_val, index) {
             const points = getPoints(this);
