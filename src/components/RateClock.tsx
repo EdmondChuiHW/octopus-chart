@@ -212,8 +212,6 @@ function makeOptions() {
             const canvas = ctx.chart.canvas;
             const parent = canvas.closest('.rate-clock');
             if (parent?.classList.contains('am')) {
-              // Make the ring significantly darker for strong contrast on
-              // light backgrounds per user request.
               return 'rgba(2,14,18,0.56)';
             }
             return COLORS.CLOCK_CIRCLE;
