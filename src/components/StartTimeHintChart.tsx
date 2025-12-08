@@ -9,7 +9,7 @@ import 'chartjs-adapter-date-fns';
 import { Line } from 'react-chartjs-2';
 import type { ConsumerConfig, Timer, TimerChoice } from '../lib/types';
 import { useMemo } from 'react';
-import { add, formatDuration, getTime, intervalToDuration } from 'date-fns';
+import { add, intervalToDuration, sub } from 'date-fns';
 import { timerStartTimeMs } from '../lib/timerUtils';
 import type { PricePoint } from '../lib/pointUtils';
 
@@ -18,7 +18,10 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 import './StartTimeHintChart.css';
 import { COLORS } from '../lib/constants';
-import { formatTimeLocal } from '../lib/dateUtils';
+import {
+  formatShortDurationHoursMinsOnly,
+  formatTimeLocal,
+} from '../lib/dateUtils';
 
 ChartJS.register(TimeScale, annotationPlugin);
 
@@ -31,7 +34,6 @@ export type Props = {
 };
 
 export default function StartTimeHintChart({
-  relativeNow,
   choice,
   consumer,
   periodPoints,
@@ -51,21 +53,6 @@ export default function StartTimeHintChart({
 
   const data = useMemo<ChartData<'line'>>(() => {
     const datasets = [] as ChartData<'line'>['datasets'];
-    datasets[DATASET_INDEXES.NOW_LINE] = {
-      order: DATASET_INDEXES.NOW_LINE * -1,
-      borderColor: COLORS.PRIMARY_BLUE,
-      borderDash: [2, 2],
-      data: [
-        {
-          x: getTime(relativeNow),
-          y: 0,
-        },
-        {
-          x: setTime,
-          y: 0,
-        },
-      ],
-    };
     datasets[DATASET_INDEXES.SET_TIME_LINE] = {
       order: DATASET_INDEXES.SET_TIME_LINE * -1,
       borderColor: COLORS.PRIMARY_BLUE,
@@ -144,7 +131,7 @@ export default function StartTimeHintChart({
     }
 
     const labels = [
-      relativeNow,
+      // relativeNow,
       startTime,
       endTime,
       setTime, // last so it can draw over others
@@ -158,7 +145,6 @@ export default function StartTimeHintChart({
     choice.timer.mode,
     endTime,
     periodPoints,
-    relativeNow,
     setTime,
     showPeriod,
     startTime,
@@ -168,9 +154,10 @@ export default function StartTimeHintChart({
     const o = makeChartOptions();
     o.scales ??= {};
     o.scales.x ??= {};
-    o.scales.x.suggestedMax = add(endTime, { hours: 1.5 }).getTime();
+    o.scales.x.suggestedMin = sub(setTime, { hours: 1.2 }).getTime();
+    o.scales.x.suggestedMax = add(endTime, { hours: 1.2 }).getTime();
     return o;
-  }, [endTime]);
+  }, [endTime, setTime]);
 
   return (
     <div className="start-time-hint-chart">
@@ -180,11 +167,10 @@ export default function StartTimeHintChart({
 }
 
 const DATASET_INDEXES = {
-  NOW_LINE: 0,
-  SET_TIME_LINE: 1,
-  START_TIME_LINE: 2,
-  TIMER_LINE: 3,
-  PERIOD_LINE: 4,
+  SET_TIME_LINE: 0,
+  START_TIME_LINE: 1,
+  TIMER_LINE: 2,
+  PERIOD_LINE: 3,
 } as const;
 
 function getDataset(ctx: { chart: ChartJS }, datasetIndex: number): Point[] {
@@ -244,7 +230,7 @@ function makeChartOptions(): ChartOptions<'line'> {
             size: (ctx) => {
               const thisTime = ctx.tick.value;
               return thisTime === getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE)
-                ? 14
+                ? 12
                 : 12;
             },
             weight: 'bold',
@@ -411,7 +397,7 @@ function makeChartOptions(): ChartOptions<'line'> {
                   start: getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE),
                   end: getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1),
                 });
-                return formatDuration(timerDuration);
+                return formatShortDurationHoursMinsOnly(timerDuration);
               },
               position: 'center',
               color: 'white',
