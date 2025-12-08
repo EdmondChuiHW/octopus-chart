@@ -1,6 +1,7 @@
 import type { Plugin, Chart } from 'chart.js';
 import { RadialLinearScale } from 'chart.js';
-import { COLORS, CLOCK_LAYOUT } from '../../lib/constants';
+import { COLORS } from '../../lib/colors';
+import { CLOCK_LAYOUT } from '../../lib/constants';
 
 // Factory to build a polar-area plugin that draws hour/half-hour ticks and labels
 export function hourLabelsPluginFactory(

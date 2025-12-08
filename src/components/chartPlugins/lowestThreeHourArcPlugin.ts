@@ -1,6 +1,6 @@
 import type { Plugin, Chart, ChartDataset } from 'chart.js';
 import { RadialLinearScale } from 'chart.js';
-import { COLORS } from '../../lib/constants';
+import { COLORS } from '../../lib/colors';
 
 // Draw a subtle arc around the clock highlighting the contiguous 3-hour block
 // (6 half-hour steps) with the lowest total rate. The plugin inspects the

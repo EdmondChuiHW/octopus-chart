@@ -1,8 +1,11 @@
-import { COLORS } from './constants';
 import type { PointStatus } from './pointUtils';
 
+const NO_DATA_BG = 'rgba(30,30,30,0.6)';
+const PRIMARY_BLUE = 'rgba(0,120,212,1)';
+const PRIMARY_BLUE_FADED = 'rgba(0,120,212,0.28)';
+
 export function rateToColor(value: number, min: number, max: number) {
-  if (isNaN(value)) return COLORS.NO_DATA_BG;
+  if (isNaN(value)) return NO_DATA_BG;
   const t = max > min ? (value - min) / (max - min) : 0.5;
   const r1 = 46,
     g1 = 204,
@@ -41,9 +44,9 @@ export function getBackgroundColorForPoint(
 ): string {
   switch (status) {
     case 'past':
-      return COLORS.PRIMARY_BLUE_FADED;
+      return PRIMARY_BLUE_FADED;
     case 'no-data':
-      return COLORS.NO_DATA_BG;
+      return NO_DATA_BG;
 
     case 'active': // fall-thru
     case 'upcoming':
@@ -59,5 +62,21 @@ export function getBorderColorForPoint(
   _min: number,
   _max: number,
 ): string | undefined {
-  return status === 'active' ? COLORS.PRIMARY_BLUE : undefined;
+  return status === 'active' ? PRIMARY_BLUE : undefined;
 }
+
+export const COLORS = {
+  NO_DATA_BG,
+  PRIMARY_BLUE,
+  PRIMARY_BLUE_FADED,
+  BORDER_LIGHT: 'rgba(0,0,0,0.12)',
+  HOUR_TICK: 'rgba(255,255,255,0.6)',
+  CLOCK_CIRCLE: 'rgba(255,255,255,0.6)',
+  HALF_TICK: 'rgba(234,246,255,0.55)',
+  HOUR_LABEL: '#eaf6ff',
+
+  TIMER: {
+    START: rateToColor(0, 0, 1),
+    END: rateToColor(1, 0, 1),
+  },
+} as const;

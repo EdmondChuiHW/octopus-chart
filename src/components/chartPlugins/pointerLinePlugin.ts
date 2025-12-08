@@ -1,6 +1,7 @@
 import type { Plugin, Chart } from 'chart.js';
 import { RadialLinearScale } from 'chart.js';
-import { COLORS, CLOCK_LAYOUT } from '../../lib/constants';
+import { COLORS } from '../../lib/colors';
+import { CLOCK_LAYOUT } from '../../lib/constants';
 
 // Plugin that draws a radial line on a polar clock which follows the user's pointer.
 // Store per-chart state in a WeakMap so we don't modify the Chart instance.

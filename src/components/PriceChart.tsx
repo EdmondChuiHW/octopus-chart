@@ -25,7 +25,7 @@ import useActiveChartIndex from '../hooks/useActiveChartIndex.ts';
 import annotationPlugin, {
   type AnnotationOptions,
 } from 'chartjs-plugin-annotation';
-import { COLORS } from '../lib/constants.ts';
+import { COLORS } from '../lib/colors';
 import type { ConsumerBestTimes } from '../lib/types.ts';
 import { formatShortDurationHoursMinsOnly } from '../lib/dateUtils.ts';
 

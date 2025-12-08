@@ -13,11 +13,10 @@ import { add, intervalToDuration, sub } from 'date-fns';
 import { timerStartTimeMs } from '../lib/timerUtils';
 import type { PricePoint } from '../lib/pointUtils';
 
-import { rateToColor } from '../lib/colors';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
 import './StartTimeHintChart.css';
-import { COLORS } from '../lib/constants';
+import { COLORS } from '../lib/colors';
 import {
   formatShortDurationHoursMinsOnly,
   formatTimeLocal,
@@ -197,8 +196,8 @@ function getTimerMode(ctx: { chart: ChartJS }): Timer['mode'] {
   throw new Error('Unable to determine timer mode');
 }
 
-const periodColor = rateToColor(0, 0, 1);
-const endColor = rateToColor(1, 0, 1);
+const periodColor = COLORS.TIMER.START;
+const endColor = COLORS.TIMER.END;
 
 function makeChartOptions(): ChartOptions<'line'> {
   return {

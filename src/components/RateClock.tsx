@@ -14,7 +14,7 @@ import {
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
 import type { PricePoint } from '../lib/pointUtils';
 import { addMinutes, setHours, startOfDay } from 'date-fns';
-import { COLORS } from '../lib/constants';
+import { COLORS } from '../lib/colors';
 import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
 import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
 import useActiveChartIndex from '../hooks/useActiveChartIndex';
