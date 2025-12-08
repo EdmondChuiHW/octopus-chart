@@ -117,16 +117,19 @@ export default function PriceChart({
 
     const bestTimeAnnotations: AnnotationOptions<'label'>[] = [];
 
+    const catIndexToTooltipLabel: Map<number, string> = new Map();
     datasets[DATASET_INDEX.CONSUMER_BEST_TIMES].data.forEach((point, i) => {
       const categoryIndex = bars.findIndex((b) => b.x === point.x);
       if (categoryIndex < 0) return;
+
+      catIndexToTooltipLabel.set(categoryIndex, point.label);
 
       const label: AnnotationOptions<'label'> = {
         type: 'label',
         id: `consumer-best-time-${point.label}-${i}`,
         drawTime: 'afterDraw',
         adjustScaleRange: false,
-        display: true,
+        display: (ctx) => getActiveIndex(ctx) !== categoryIndex,
         // TODO: handle multiple best times at the same category index
         borderColor: COLORS.PRIMARY_BLUE,
         xMin: categoryIndex,
@@ -134,27 +137,17 @@ export default function PriceChart({
         yMin: point.y,
         yMax: point.y,
         borderRadius: 6,
-        content: (ctx) =>
-          getActiveIndex(ctx) === categoryIndex ? point.label : '●',
-        z: (ctx) => (getActiveIndex(ctx) === categoryIndex ? 1 : 0),
+        content: '●',
         position: {
           x: 'center',
           y: 'end',
         },
-        yAdjust: (ctx) => (getActiveIndex(ctx) === categoryIndex ? -24 : 0),
-        padding: (ctx) => (getActiveIndex(ctx) === categoryIndex ? 6 : 0),
+        padding: 0,
         font: {
           size: 16,
           weight: 'bold',
         },
-        backgroundColor: (ctx) =>
-          getActiveIndex(ctx) === categoryIndex
-            ? COLORS.PRIMARY_BLUE
-            : 'transparent',
-        color: (ctx) =>
-          getActiveIndex(ctx) === categoryIndex
-            ? '#ffffff'
-            : COLORS.PRIMARY_BLUE,
+        color: COLORS.PRIMARY_BLUE,
       };
 
       bestTimeAnnotations.push(label);
@@ -162,8 +155,46 @@ export default function PriceChart({
 
     const annotations: AnnotationOptions[] = o.plugins.annotation.annotations;
     annotations.push(...bestTimeAnnotations);
+
+    annotations.push({
+      type: 'line',
+      id: 'activeLine',
+      drawTime: 'afterDraw',
+      adjustScaleRange: false,
+      borderColor: COLORS.PRIMARY_BLUE,
+      display: (ctx) => getActiveIndex(ctx) >= 0,
+      xMin: (ctx) => getActiveIndex(ctx),
+      xMax: (ctx) => getActiveIndex(ctx),
+      yMin: (ctx) => getActivePoint(ctx)?.y ?? 0,
+      // TODO: fix yMax protruding beyond label border radius
+      borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
+      label: {
+        display: (ctx) => getActiveIndex(ctx) >= 0,
+        content: (ctx) => {
+          const i = getActiveIndex(ctx);
+          if (i < 0) return '';
+
+          const p = points[i];
+          return [
+            p.label,
+            `${p.y.toFixed(2)}p/kWh`,
+            catIndexToTooltipLabel.get(i),
+            // Thanks TS still not type-narrowing filter(Boolean) in 2k25 lol
+          ].filter(Boolean) as string[];
+        },
+        position: 'end',
+        backgroundColor: COLORS.PRIMARY_BLUE,
+        color: '#ffffff',
+        yAdjust: -6,
+        padding: 6,
+        font: {
+          size: 16,
+          weight: 'bold',
+        },
+      },
+    });
     return o;
-  }, [datasets]);
+  }, [datasets, points]);
 
   const ref = useActiveChartIndex<ChartJS<'bar'>>(displayIndex);
 
@@ -250,39 +281,7 @@ function makeOptions() {
             type: 'number',
           },
         },
-        annotations: [
-          {
-            type: 'line',
-            id: 'activeLine',
-            drawTime: 'afterDraw',
-            adjustScaleRange: false,
-            borderColor: COLORS.PRIMARY_BLUE,
-            display: (ctx) => getActiveIndex(ctx) >= 0,
-            xMin: (ctx) => getActiveIndex(ctx),
-            xMax: (ctx) => getActiveIndex(ctx),
-            yMin: (ctx) => getActivePoint(ctx)?.y ?? 0,
-            // TODO: fix yMax protruding beyond label border radius
-            borderWidth: (ctx) => (getActiveIndex(ctx) >= 0 ? 4 : 0),
-            label: {
-              display: (ctx) => getActiveIndex(ctx) >= 0,
-              content: (ctx) => {
-                const p = getActivePoint(ctx);
-                if (!p) return '';
-
-                return [p.label, `${p.y.toFixed(2)}p/kWh`];
-              },
-              position: 'end',
-              backgroundColor: COLORS.PRIMARY_BLUE,
-              color: '#ffffff',
-              yAdjust: -6,
-              padding: 6,
-              font: {
-                size: 16,
-                weight: 'bold',
-              },
-            },
-          },
-        ],
+        annotations: [],
       },
     },
     scales: {
