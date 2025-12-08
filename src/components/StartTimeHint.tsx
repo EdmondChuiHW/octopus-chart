@@ -1,8 +1,13 @@
-import { formatDuration, milliseconds } from 'date-fns';
-import { formatTimeLocal } from '../lib/dateUtils';
+import { milliseconds } from 'date-fns';
+import {
+  formatShortDurationHoursMinsOnly,
+  formatTimeLocal,
+} from '../lib/dateUtils';
 import type { TimerChoice } from '../lib/types';
 
 import './StartTimeHint.css';
+import { useMemo, type PropsWithChildren } from 'react';
+import { COLORS } from '../lib/colors';
 
 export type Props = {
   startMs: number;
@@ -77,8 +82,42 @@ function TimerHint({ choice }: { choice: TimerChoice }) {
   })();
   return (
     <>
-      At <b>{setTimeStr}</b>, set to <b>{modeStr}</b> in{' '}
-      <b>{formatDuration(choice.timer.duration)}</b>
+      At <ColorText type="set">{setTimeStr}</ColorText>, set to{' '}
+      <ColorText type={modeStr}>{modeStr}</ColorText> in{' '}
+      <b>{formatShortDurationHoursMinsOnly(choice.timer.duration)}</b>
     </>
+  );
+}
+
+function ColorText({
+  type,
+  children,
+}: PropsWithChildren<{ type: 'set' | 'start' | 'end' }>) {
+  const colour = useMemo(() => {
+    switch (type) {
+      case 'set':
+        return COLORS.PRIMARY_BLUE;
+      case 'start':
+        return COLORS.TIMER.START;
+      case 'end':
+        return COLORS.TIMER.END;
+      default:
+        throw new Error(`Unknown type: ${type satisfies never}`);
+    }
+  }, [type]);
+
+  return (
+    <span
+      style={{
+        textDecorationColor: colour,
+        textDecorationLine: 'underline',
+        textDecorationThickness: '3px',
+        textUnderlineOffset: '4px',
+        // textUnderlinePosition: 'under',
+        fontWeight: 'bold',
+      }}
+    >
+      {children}
+    </span>
   );
 }
