@@ -31,7 +31,7 @@ export default function StartTimeHint({
     return (
       <>
         No timers applicable. Start manually at{' '}
-        <b>{formatTimeLocal(startMs)}</b>
+        <ColorText type="start">{formatTimeLocal(startMs)}</ColorText>
       </>
     );
   }
