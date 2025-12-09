@@ -10,6 +10,7 @@ import {
   ArcElement,
   Tooltip,
   Legend,
+  DoughnutController,
 } from 'chart.js';
 import { hourLabelsPluginFactory } from './chartPlugins/hourLabelsPlugin';
 import type { PricePoint } from '../lib/pointUtils';
@@ -20,6 +21,7 @@ import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
 import useActiveChartIndex from '../hooks/useActiveChartIndex';
 
 ChartJS.register(
+  DoughnutController,
   PolarAreaController,
   RadialLinearScale,
   ArcElement,
