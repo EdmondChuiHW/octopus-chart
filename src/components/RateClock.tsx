@@ -34,6 +34,7 @@ type Props = {
   displayIndex: readonly [number, 'none' | 'default'];
   onHover?: (index: number) => void;
   setHovering?: (isHovering: boolean) => void;
+  consumerBestTimes?: import('../lib/types').ConsumerBestTimes[];
 };
 
 export default function RateClock({
@@ -43,6 +44,7 @@ export default function RateClock({
   displayIndex: displayGlobalIndex,
   onHover: onHoverGlobalIndex,
   setHovering,
+  consumerBestTimes,
 }: Props) {
   const allMax = useMemo(
     () => Math.max(...allPoints.map((p) => p.y)) * 1,
@@ -82,6 +84,28 @@ export default function RateClock({
       borderAlign: 'inner',
     };
 
+    const bestTimeIndices = new Set<number>();
+    consumerBestTimes?.forEach(({ bestStartTimePoints }) => {
+      const best = bestStartTimePoints[0];
+      const i = points.findIndex((p) => p?.startMs === best.startMs);
+      if (i >= 0) {
+        bestTimeIndices.add(i);
+      }
+    });
+
+    const donutDataset: ChartDataset<'doughnut', number[]> = {
+      type: 'doughnut',
+      animation: false,
+      data: points.map(() => allMax),
+      borderAlign: 'inner',
+      borderColor: points.map((_, idx) =>
+        bestTimeIndices.has(idx) ? 'transparent' : 'transparent',
+      ),
+      backgroundColor: points.map((_, idx) =>
+        bestTimeIndices.has(idx) ? COLORS.PRIMARY_BLUE_FADED : 'transparent',
+      ),
+    };
+
     const hitDataset: ChartDataset<'polarArea', number[]> = {
       label: 'hit-area',
       data: points.map((p) => (p ? allMax : 0)),
@@ -92,9 +116,14 @@ export default function RateClock({
 
     return {
       labels: points.map((d) => d?.label),
-      datasets: [visibleDataset, hitDataset],
+      datasets: [
+        // draw arcs first so they're under the clock ring
+        donutDataset as ChartDataset<'polarArea', number[]>,
+        visibleDataset,
+        hitDataset,
+      ],
     };
-  }, [allMax, points]);
+  }, [allMax, points, consumerBestTimes]);
 
   const displayLocalIndex = useMemo(() => {
     const [globalIndex, mode] = displayGlobalIndex;
@@ -189,10 +218,15 @@ export default function RateClock({
 }
 
 // can't go futher with `scales.r.suggestedMax` without a mess
-type NoComponentOptions = Omit<ChartOptions<'polarArea'>, 'onHover'>;
+type NoComponentOptions = Omit<
+  ChartOptions<'polarArea'> & ChartOptions<'doughnut'>,
+  'onHover'
+>;
 
 function makeOptions() {
   return {
+    radius: '99%',
+    cutout: '85%',
     maintainAspectRatio: false,
     layout: {
       padding: 8,

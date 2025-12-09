@@ -2,7 +2,7 @@ import type { PointStatus } from './pointUtils';
 
 const NO_DATA_BG = 'rgba(30,30,30,0.6)';
 const PRIMARY_BLUE = 'rgba(0,120,212,1)';
-const PRIMARY_BLUE_FADED = 'rgba(0,120,212,0.28)';
+const PRIMARY_BLUE_FADED = 'rgba(0,120,212,0.5)';
 
 export function rateToColor(value: number, min: number, max: number) {
   if (isNaN(value)) return NO_DATA_BG;

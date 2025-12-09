@@ -154,6 +154,7 @@ export default function OctopusCharts() {
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
+            consumerBestTimes={consumers}
           />
         }
         todayPmClock={
@@ -164,6 +165,7 @@ export default function OctopusCharts() {
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
+            consumerBestTimes={consumers}
           />
         }
         tomorrowAmClock={
@@ -174,6 +176,7 @@ export default function OctopusCharts() {
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
+            consumerBestTimes={consumers}
           />
         }
         tomorrowPmClock={
@@ -184,6 +187,7 @@ export default function OctopusCharts() {
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
+            consumerBestTimes={consumers}
           />
         }
         bestPeriods={
