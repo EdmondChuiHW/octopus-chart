@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { UpdateBanner } from './components/UpdateBanner';
 import './App.css';
 import OctopusCharts from './components/OctopusCharts';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -8,6 +9,7 @@ import OctopusChartsPlaceholder from './components/OctopusChartsPlaceholder';
 function App() {
   return (
     <>
+      <UpdateBanner />
       <Suspense fallback={<OctopusChartsPlaceholder />}>
         <QueryErrorResetBoundary>
           {({ reset }) => (
