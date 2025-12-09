@@ -46,7 +46,7 @@ function BestNext({ duration }: { duration?: Duration }) {
 
   return (
     <div className="best-next">
-      Average best rate for the next {formatDuration(duration)}.
+      Average best rate for the next <b>{formatDuration(duration)}</b>.
     </div>
   );
 }
