@@ -272,18 +272,28 @@ function makeChartOptions(): ChartOptions<'line'> {
             display: true,
             yMin: 0,
             yMax: 3,
-            label: {
-              z: 1,
-              content: 'Set',
-              display: true,
-              position: 'start',
-              backgroundColor: COLORS.PRIMARY_BLUE,
-              color: '#ffffff',
-              font: {
-                size: 12,
-                weight: 'bold',
-              },
+          },
+          setTimeLabel: {
+            type: 'label',
+            z: 1,
+            xValue: (ctx) => getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE),
+            yValue: 0.25,
+            content: 'Set',
+            display: true,
+            position: {
+              x: 'center',
+              y: 'end',
             },
+            color: 'white',
+            borderRadius: 6,
+            backgroundColor: 'black',
+            borderColor: COLORS.PRIMARY_BLUE,
+            borderWidth: 2,
+            font: {
+              size: 14,
+              weight: 'bold',
+            },
+            padding: { x: 4, y: 2 },
           },
           startTimeLine: {
             type: 'line',
@@ -319,9 +329,10 @@ function makeChartOptions(): ChartOptions<'line'> {
             borderRadius: 6,
             color: '#ffffff',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
             },
+            padding: { x: 4, y: 2 },
           },
           endTimeLine: {
             type: 'line',
@@ -353,7 +364,6 @@ function makeChartOptions(): ChartOptions<'line'> {
               getTimeMs(ctx, DATASET_INDEXES.START_TIME_LINE, -1),
             yValue: 0.25,
             borderColor: endColor,
-            adjustScaleRange: true,
             position: {
               x: 'center',
               y: 'end',
@@ -363,9 +373,10 @@ function makeChartOptions(): ChartOptions<'line'> {
             borderRadius: 6,
             color: '#ffffff',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
             },
+            padding: { x: 4, y: 2 },
           },
           timerLine: {
             type: 'line',
@@ -388,7 +399,6 @@ function makeChartOptions(): ChartOptions<'line'> {
             yMax: 3,
             xMin: (ctx) => getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE),
             xMax: (ctx) => getTimeMs(ctx, DATASET_INDEXES.TIMER_LINE, -1),
-            adjustScaleRange: true,
             label: {
               display: true,
               content: (ctx) => {
@@ -400,10 +410,13 @@ function makeChartOptions(): ChartOptions<'line'> {
               },
               position: 'center',
               color: 'white',
-              backgroundColor: COLORS.PRIMARY_BLUE,
-              padding: { x: 8, y: 2 },
+              backgroundColor: 'black',
+              borderColor: endColor,
+              borderWidth: 2,
+              padding: { x: 4, y: 2 },
               font: {
                 size: 14,
+                weight: 'bold',
               },
             },
           },
