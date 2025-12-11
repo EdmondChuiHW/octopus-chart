@@ -74,6 +74,7 @@ export default function RateClock({
   >(() => {
     const visibleDataset: ChartDataset<'polarArea', (number | undefined)[]> = {
       label: 'p/kWh (inc VAT)',
+      order: 1,
       data: points.map((p) => p?.y ?? 0),
       backgroundColor: (ctx) => {
         return points.at(ctx.dataIndex)?.backgroundColor;
@@ -97,12 +98,11 @@ export default function RateClock({
 
     const donutDataset: ChartDataset<'doughnut', number[]> = {
       type: 'doughnut',
+      order: 0,
       animation: false,
       data: points.map(() => allMax),
       borderAlign: 'inner',
-      borderColor: points.map((_, idx) =>
-        bestTimeIndices.has(idx) ? 'transparent' : 'transparent',
-      ),
+      borderColor: 'transparent',
       backgroundColor: points.map((_, idx) =>
         bestTimeIndices.has(idx) ? COLORS.PRIMARY_BLUE_FADED : 'transparent',
       ),
@@ -119,9 +119,8 @@ export default function RateClock({
     return {
       labels: points.map((d) => d?.label),
       datasets: [
-        // draw arcs first so they're under the clock ring
-        donutDataset as ChartDataset<'polarArea', number[]>,
         visibleDataset,
+        donutDataset as ChartDataset<'polarArea', number[]>,
         hitDataset,
       ],
     };
@@ -227,7 +226,7 @@ type NoComponentOptions = Omit<
 
 function makeOptions() {
   return {
-    radius: '99%',
+    radius: '104%',
     cutout: '85%',
     maintainAspectRatio: false,
     layout: {
