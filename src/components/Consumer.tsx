@@ -4,7 +4,7 @@ import type { PricePoint } from '../lib/pointUtils';
 import CheapestPeriod from './CheapestPeriod';
 import { useMemo, useState } from 'react';
 import { timerSetTimeMs } from '../lib/timerUtils';
-import { formatDuration, isAfter } from 'date-fns';
+import { formatDuration, isAfter, sub, type Duration } from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
 
 import './Consumer.css';
@@ -31,7 +31,8 @@ export default function Consumer({
     return timers
       .flatMap((timer) => {
         const setTime = timerSetTimeMs(startMs, timer, duration);
-        if (isAfter(setTime, relativeNow)) {
+        // TODO add UI indicator for late timers
+        if (isAfter(setTime, sub(relativeNow, LOOKBACK_DURATION))) {
           return { timer, setTime };
         }
         return [];
@@ -67,3 +68,5 @@ export default function Consumer({
     </div>
   );
 }
+
+const LOOKBACK_DURATION: Duration = { minutes: 30 };
