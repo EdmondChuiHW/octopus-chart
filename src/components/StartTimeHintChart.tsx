@@ -411,7 +411,19 @@ function makeChartOptions(): ChartOptions<'line'> {
               position: 'center',
               color: 'white',
               backgroundColor: 'black',
-              borderColor: endColor,
+              borderColor: (ctx) => {
+                const mode = getTimerMode(ctx);
+                switch (mode) {
+                  case 'starts-in':
+                    return periodColor;
+                  case 'ends-in':
+                    return endColor;
+                  default:
+                    throw new Error(
+                      `Unknown timer mode: ${mode satisfies never}`,
+                    );
+                }
+              },
               borderWidth: 2,
               padding: { x: 4, y: 2 },
               font: {
