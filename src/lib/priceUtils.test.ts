@@ -1,5 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { findLowestPeriod } from './priceUtils';
+import {
+  findLowestPeriod,
+  computeWindowSums,
+  findTopNCheapestPeriods,
+} from './priceUtils';
+describe('computeWindowSums', () => {
+  it('computes window sums for a simple array', () => {
+    const arr = [1, 2, 3, 4, 5];
+    const result = computeWindowSums(arr, (x) => x, 3);
+    expect(result).toEqual([
+      { startIndex: 0, sum: 6 }, // 1+2+3
+      { startIndex: 1, sum: 9 }, // 2+3+4
+      { startIndex: 2, sum: 12 }, // 3+4+5
+    ]);
+  });
+
+  it('returns empty for too short array', () => {
+    expect(computeWindowSums([1, 2], (x) => x, 3)).toEqual([]);
+  });
+});
+
+describe('findTopNCheapestPeriods', () => {
+  it('finds the n cheapest periods', () => {
+    const arr = [5, 2, 1, 4, 3];
+    const result = findTopNCheapestPeriods(arr, (x) => x, 2, 2);
+    // All 2-length windows: [5+2=7, 2+1=3, 1+4=5, 4+3=7]
+    // Sorted: [{1,3}, {2,5}]
+        expect(result).toEqual([1, 2]);
+  });
+
+  it('returns empty for n=0 or too short', () => {
+    expect(findTopNCheapestPeriods([1, 2], (x) => x, 3, 2)).toEqual([]);
+    expect(findTopNCheapestPeriods([1, 2, 3], (x) => x, 2, 0)).toEqual([]);
+  });
+});
 
 describe('findLowestPeriod', () => {
   it('returns -1 for non-positive targetLength or empty points', () => {
