@@ -8,20 +8,25 @@ import { formatDuration, isAfter, sub, type Duration } from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
 
 import './Consumer.css';
+import CheapestPeriodList from './CheapestPeriodList';
+import { ShowMoreList } from './ShowMoreList';
 
 export type Props = {
   config: ConsumerConfig;
   relativeNow: Date | number;
 
-  bestStartTimePoints: PricePoint[];
+  bestStartTimePointsList: PricePoint[][];
 };
 
 export default function Consumer({
   config,
   relativeNow,
-  bestStartTimePoints: points,
+  bestStartTimePointsList: pointsList,
 }: Props) {
   const { name, duration, timers } = config;
+  const [selectedPeriodIndex, setSelectedPeriodIndex] = useState(0);
+  const points: PricePoint[] =
+    selectedPeriodIndex >= 0 ? pointsList[selectedPeriodIndex] : [];
   const startMs = points.length === 0 ? -1 : points[0].startMs;
   const choices = useMemo<TimerChoice[]>(() => {
     if (startMs < 0) {
@@ -46,10 +51,18 @@ export default function Consumer({
     <div className="consumer">
       <h2>{name}</h2>
       <small>Run time: {formatDuration(config.duration)}</small>
-      <CheapestPeriod
-        points={points}
-        period={{ index: 0, length: points.length }}
-      />
+      <ShowMoreList>
+        {pointsList.map((points) => {
+          return (
+            <div>
+              <CheapestPeriod
+                points={points}
+                period={{ index: 0, length: points.length }}
+              />
+            </div>
+          );
+        })}
+      </ShowMoreList>
       <StartTimeHint
         choices={choices}
         startMs={startMs}

@@ -88,8 +88,8 @@ export default function PriceChart({
     const consumersDataset: ChartDataset<'bar', PricePoint[]> = {
       hidden: true,
       label: 'Consumer best time annotations',
-      data: consumerBestTimes.map(({ config, bestStartTimePoints }) => {
-        const best = bestStartTimePoints[0];
+      data: consumerBestTimes.map(({ config, bestStartTimePointsList }) => {
+        const best = bestStartTimePointsList[0]?.[0];
         return {
           ...best,
           label: `Best: ${formatShortDurationHoursMinsOnly(config.duration)}`,

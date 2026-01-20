@@ -19,6 +19,7 @@ import { COLORS } from '../lib/colors';
 import { pointerLinePluginFactory } from './chartPlugins/pointerLinePlugin';
 import { nearestHoverPluginFactory } from './chartPlugins/nearestHoverPlugin';
 import useActiveChartIndex from '../hooks/useActiveChartIndex';
+import type { ConsumerBestTimes } from '../lib/types';
 
 ChartJS.register(
   DoughnutController,
@@ -36,7 +37,7 @@ type Props = {
   displayIndex: readonly [number, 'none' | 'default'];
   onHover?: (index: number) => void;
   setHovering?: (isHovering: boolean) => void;
-  consumerBestTimes?: import('../lib/types').ConsumerBestTimes[];
+  consumerBestTimes?: ConsumerBestTimes[];
 };
 
 export default function RateClock({
@@ -88,8 +89,8 @@ export default function RateClock({
     };
 
     const bestTimeIndices = new Set<number>();
-    consumerBestTimes?.forEach(({ bestStartTimePoints }) => {
-      const best = bestStartTimePoints[0];
+    consumerBestTimes?.forEach(({ bestStartTimePointsList }) => {
+      const best = bestStartTimePointsList[0]?.[0];
       const i = points.findIndex((p) => p?.startMs === best.startMs);
       if (i >= 0) {
         bestTimeIndices.add(i);
