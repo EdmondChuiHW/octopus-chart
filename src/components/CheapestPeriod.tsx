@@ -28,9 +28,9 @@ export default function CheapestPeriod({ points, period }: Props) {
   }
 
   return (
-    <div>
+    <>
       Avg <b>{periodAvg.toFixed(2)}</b>p/kWh {startPoint.label}–
       {endPoint.endLabel}
-    </div>
+    </>
   );
 }
