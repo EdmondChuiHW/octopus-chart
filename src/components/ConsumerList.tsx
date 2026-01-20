@@ -11,13 +11,13 @@ export type Props = {
 export default function ConsumerList({ consumers, relativeNow }: Props) {
   return (
     <>
-      {consumers.map(({ config, bestStartTimePointsList }) => {
+      {consumers.map(({ config, bestStartTimePoints }) => {
         return (
           <Consumer
             key={config.name}
             config={config}
             relativeNow={relativeNow}
-            bestStartTimePointsList={bestStartTimePointsList}
+            bestStartTimePoints={bestStartTimePoints}
           />
         );
       })}

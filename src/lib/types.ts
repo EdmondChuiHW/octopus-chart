@@ -33,5 +33,5 @@ export type ConsumerConfig = {
 
 export type ConsumerBestTimes = {
   config: ConsumerConfig;
-  bestStartTimePointsList: PricePoint[][];
+  bestStartTimePoints: PricePoint[];
 };

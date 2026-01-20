@@ -8,8 +8,8 @@ import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 import HoverDisplay from './HoverDisplay';
 import ConsumerList from './ConsumerList';
-import type { ConsumerBestTimes, ConsumerConfig } from '../lib/types';
-import { findTopNCheapestPeriods } from '../lib/priceUtils';
+import type { ConsumerConfig } from '../lib/types';
+import { findLowestPeriod } from '../lib/priceUtils';
 import { millisecondsInHour } from 'date-fns/constants';
 import useResizeChartsOnOrientationChange from '../hooks/useResizeChartsOnOrientationChange';
 
@@ -105,24 +105,17 @@ export default function OctopusCharts() {
     [points, displayIndex],
   );
 
-  const consumers: ConsumerBestTimes[] = useMemo(
+  const consumers = useMemo(
     () =>
       CONSUMERS.map((config) => {
         const afterNow = points.filter((p) => isAfter(p.startMs, nowMs));
         const targetLength = Math.ceil(
           milliseconds(config.duration) / millisecondsInHour / 0.5, // half-hourly points
         );
-        const indexes = findTopNCheapestPeriods(
-          afterNow,
-          (p) => p.y,
-          targetLength,
-          Number.MAX_SAFE_INTEGER,
-        );
+        const index = findLowestPeriod(afterNow, (p) => p.y, targetLength);
         return {
           config,
-          bestStartTimePointsList: indexes.map((index) =>
-            afterNow.slice(index, index + targetLength),
-          ),
+          bestStartTimePoints: afterNow.slice(index, index + targetLength),
         };
       }),
     [nowMs, points],
@@ -132,8 +125,8 @@ export default function OctopusCharts() {
     if (!displayPoint) return undefined;
 
     const firstBestDuration = consumers.find(
-      ({ bestStartTimePointsList }) =>
-        bestStartTimePointsList[0]?.[0]?.startMs === displayPoint.startMs,
+      ({ bestStartTimePoints }) =>
+        bestStartTimePoints[0]?.startMs === displayPoint.startMs,
     )?.config.duration;
 
     return firstBestDuration;
