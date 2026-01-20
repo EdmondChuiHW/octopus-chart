@@ -8,6 +8,7 @@ import type { TimerChoice } from '../lib/types';
 import './StartTimeHint.css';
 import { useMemo, type PropsWithChildren } from 'react';
 import { COLORS } from '../lib/colors';
+import { ShowMoreList } from './ShowMoreList';
 
 export type Props = {
   startMs: number;
@@ -42,23 +43,25 @@ export default function StartTimeHint({
         <fieldset>
           <legend>Timer options</legend>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {choices.map((choice, index) => {
-              const key = `${choice.setTime.getTime()}-${choice.timer.mode}-${milliseconds(
-                choice.timer.duration,
-              )}`;
-              return (
-                <label key={key}>
-                  <input
-                    type="radio"
-                    name="timerChoice"
-                    value={key}
-                    checked={index === selectedChoiceIndex}
-                    onChange={() => onChoiceChange?.(index)}
-                  />
-                  <TimerHint choice={choice} />
-                </label>
-              );
-            })}
+            <ShowMoreList>
+              {choices.map((choice, index) => {
+                const key = `${choice.setTime.getTime()}-${choice.timer.mode}-${milliseconds(
+                  choice.timer.duration,
+                )}`;
+                return (
+                  <label key={key}>
+                    <input
+                      type="radio"
+                      name="timerChoice"
+                      value={key}
+                      checked={index === selectedChoiceIndex}
+                      onChange={() => onChoiceChange?.(index)}
+                    />
+                    <TimerHint choice={choice} />
+                  </label>
+                );
+              })}
+            </ShowMoreList>
           </div>
         </fieldset>
       </form>
