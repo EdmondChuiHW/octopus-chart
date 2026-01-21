@@ -78,7 +78,9 @@ function Inner({
       <span style={{ flex: 1 }}>
         <ColorText type="end">{endLabel}</ColorText>
       </span>
-      <small>{periodLabel}p/kWh</small>
+      <span style={{ fontFamily: 'monospace', fontSize: 'small' }}>
+        {periodLabel}p/kWh
+      </span>
     </span>
   );
 }
