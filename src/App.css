@@ -103,17 +103,36 @@
   aspect-ratio: 1 / 1;
 }
 
-.rate-clock .am-pm-label {
+.rate-clock .corner-label {
   position: absolute;
-  top: 12px;
-  right: 12px;
   display: grid;
   place-items: center;
   pointer-events: none;
 }
 
-.rate-clock .am-pm-label .label {
+.rate-clock .corner-label.top-right {
+  top: 0.2em;
+  right: 0.4em;
+}
+
+.rate-clock .corner-label.bottom-right {
+  bottom: 0.2em;
+  right: 0.4em;
+}
+
+.rate-clock .corner-label.bottom-left {
+  bottom: 0.2em;
+  left: 0.4em;
+}
+
+.rate-clock .corner-label .label {
   font-size: 1.3em;
+  font-weight: bold;
+  pointer-events: initial;
+}
+
+.rate-clock .corner-label .label.small {
+  font-size: 0.9em;
   font-weight: bold;
   pointer-events: initial;
 }

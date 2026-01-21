@@ -198,6 +198,8 @@ export default function RateClock({
     return <b>No data for {amPmLabel}</b>;
   }
 
+  const displayPoint = points[displayLocalIndex[0]];
+
   return (
     <>
       <div className="chart-container">
@@ -211,9 +213,16 @@ export default function RateClock({
           onPointerOut={() => setHovering?.(false)}
         />
       </div>
-      <div className="am-pm-label">
-        <div className="label">{amPmLabel}</div>
+      <div className="corner-label top-right">
+        <div className="label">
+          {displayPoint ? displayPoint.label.toUpperCase() : amPmLabel}
+        </div>
       </div>
+      {displayPoint && (
+        <div className="corner-label bottom-right">
+          <div className="label small">{displayPoint.y.toFixed(2)}p/kWh</div>
+        </div>
+      )}
     </>
   );
 }
