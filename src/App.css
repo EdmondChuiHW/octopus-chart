@@ -15,14 +15,7 @@
 .chart-wrap {
   height: clamp(180px, 20vh, 520px);
   position: relative;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.02),
-    rgba(255, 255, 255, 0.01)
-  );
-  padding: 0.75rem;
   border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
 .placeholder {
   color: #ffe;
@@ -70,7 +63,6 @@
 
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 
   position: relative;
 }

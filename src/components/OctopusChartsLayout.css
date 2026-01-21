@@ -19,5 +19,5 @@
 }
 
 .octopus-charts-layout .best-periods > * {
-  flex-grow: 1;
+  flex: 1;
 }
