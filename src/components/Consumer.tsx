@@ -1,7 +1,7 @@
 import type { ConsumerConfig, TimerChoice } from '../lib/types';
 import StartTimeHint from './StartTimeHint';
 import type { PricePoint } from '../lib/pointUtils';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { timerSetTimeMs } from '../lib/timerUtils';
 import { isAfter, milliseconds, sub, type Duration } from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
@@ -61,6 +61,13 @@ export default function Consumer({
   }, [relativeNow, startMs, duration, timers]);
 
   const [choiceIndex, setChoiceIndex] = useState(0);
+
+  const prevChoices = useRef(choices);
+  if (prevChoices.current !== choices) {
+    prevChoices.current = choices;
+    setChoiceIndex(0);
+  }
+
   const legend = useMemo(
     () => formatShortDurationHoursMinsOnly(config.duration),
     [config.duration],
