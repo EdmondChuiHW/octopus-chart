@@ -1,11 +1,10 @@
-import HoverDisplay from './HoverDisplay';
 import OctopusChartsLayout from './OctopusChartsLayout';
 
 export default function OctopusChartsPlaceholder() {
   return (
     <>
       <OctopusChartsLayout
-        hoverInfo={<HoverDisplay point={undefined} />}
+        hoverInfo={null}
         barChart={null}
         todayAmClock={<div className="chart-container"></div>}
         todayPmClock={<div className="chart-container"></div>}

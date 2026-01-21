@@ -6,7 +6,6 @@ import { buildPointsData } from '../lib/pointUtils';
 import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
-import HoverDisplay from './HoverDisplay';
 import ConsumerList from './ConsumerList';
 import type { ConsumerConfig } from '../lib/types';
 import { findLowestPeriod } from '../lib/priceUtils';
@@ -100,10 +99,6 @@ export default function OctopusCharts() {
         : ([delayedActiveIndex, 'default'] as const),
     [hoverIndex, delayedActiveIndex],
   );
-  const displayPoint = useMemo(
-    () => (displayIndex[0] < 0 ? undefined : points.at(displayIndex[0])),
-    [points, displayIndex],
-  );
 
   const consumers = useMemo(
     () =>
@@ -120,17 +115,6 @@ export default function OctopusCharts() {
       }),
     [nowMs, points],
   );
-
-  const hoverBestTimeDuration = useMemo(() => {
-    if (!displayPoint) return undefined;
-
-    const firstBestDuration = consumers.find(
-      ({ bestStartTimePoints }) =>
-        bestStartTimePoints[0]?.startMs === displayPoint.startMs,
-    )?.config.duration;
-
-    return firstBestDuration;
-  }, [consumers, displayPoint]);
 
   useResizeChartsOnOrientationChange();
 
@@ -198,12 +182,7 @@ export default function OctopusCharts() {
           />
         }
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
-        hoverInfo={
-          <HoverDisplay
-            point={displayPoint}
-            bestDuration={hoverBestTimeDuration}
-          />
-        }
+        hoverInfo={null}
       />
     </>
   );
