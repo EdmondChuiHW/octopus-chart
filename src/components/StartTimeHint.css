@@ -1,5 +1,4 @@
 .start-time-hint {
-  width: fit-content;
-  max-width: 500px;
+  max-width: 22rem;
   margin: 0.5rem auto;
 }

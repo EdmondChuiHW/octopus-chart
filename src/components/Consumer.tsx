@@ -3,19 +3,14 @@ import StartTimeHint from './StartTimeHint';
 import type { PricePoint } from '../lib/pointUtils';
 import { useMemo, useState } from 'react';
 import { timerSetTimeMs } from '../lib/timerUtils';
-import {
-  formatDuration,
-  isAfter,
-  milliseconds,
-  sub,
-  type Duration,
-} from 'date-fns';
+import { isAfter, milliseconds, sub, type Duration } from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
 
 import './Consumer.css';
 import { millisecondsInHour } from 'date-fns/constants';
 import CheapestPeriodList from './CheapestPeriodList';
 import useBestPeriods from '../hooks/useBestPeriods';
+import { formatShortDurationHoursMinsOnly } from '../lib/dateUtils';
 
 export type Props = {
   config: ConsumerConfig;
@@ -63,14 +58,18 @@ export default function Consumer({
   }, [relativeNow, startMs, duration, timers]);
 
   const [choiceIndex, setChoiceIndex] = useState(0);
+  const legend = useMemo(
+    () => formatShortDurationHoursMinsOnly(config.duration),
+    [config.duration],
+  );
 
   return (
     <div className="consumer">
       <h2>{name}</h2>
-      <small>Run time: {formatDuration(config.duration)}</small>
       <CheapestPeriodList
         points={allPoints}
         periods={periods}
+        legend={`Period options (${legend})`}
         selectedIndex={selectedPeriod}
         onChange={setSelectedPeriod}
       />

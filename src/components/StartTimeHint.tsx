@@ -6,9 +6,8 @@ import {
 import type { TimerChoice } from '../lib/types';
 
 import './StartTimeHint.css';
-import { useMemo, type PropsWithChildren } from 'react';
-import { COLORS } from '../lib/colors';
-import { ShowMoreList } from './ShowMoreList';
+import { ColorText } from './ColorText';
+import RadioForm from './RadioForm';
 
 export type Props = {
   startMs: number;
@@ -38,34 +37,29 @@ export default function StartTimeHint({
   }
 
   return (
-    <>
-      <form className="start-time-hint">
-        <fieldset>
-          <legend>Timer options</legend>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <ShowMoreList>
-              {choices.map((choice, index) => {
-                const key = `${choice.setTime.getTime()}-${choice.timer.mode}-${milliseconds(
-                  choice.timer.duration,
-                )}`;
-                return (
-                  <label key={key}>
-                    <input
-                      type="radio"
-                      name="timerChoice"
-                      value={key}
-                      checked={index === selectedChoiceIndex}
-                      onChange={() => onChoiceChange?.(index)}
-                    />
-                    <TimerHint choice={choice} />
-                  </label>
-                );
-              })}
-            </ShowMoreList>
-          </div>
-        </fieldset>
-      </form>
-    </>
+    <RadioForm legend="Timer options">
+      {choices.map((choice, index) => {
+        const key = `${choice.setTime.getTime()}-${choice.timer.mode}-${milliseconds(
+          choice.timer.duration,
+        )}`;
+        return (
+          <label
+            key={key}
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <input
+              type="radio"
+              name="timerChoice"
+              value={key}
+              checked={index === selectedChoiceIndex}
+              onChange={() => onChoiceChange?.(index)}
+              style={{ marginInlineEnd: '4px' }}
+            />
+            <TimerHint choice={choice} />
+          </label>
+        );
+      })}
+    </RadioForm>
   );
 }
 
@@ -84,43 +78,10 @@ function TimerHint({ choice }: { choice: TimerChoice }) {
     }
   })();
   return (
-    <>
+    <span style={{ textAlign: 'start' }}>
       At <ColorText type="set">{setTimeStr}</ColorText>, set to{' '}
       <ColorText type={modeStr}>{modeStr}</ColorText> in{' '}
       <b>{formatShortDurationHoursMinsOnly(choice.timer.duration)}</b>
-    </>
-  );
-}
-
-function ColorText({
-  type,
-  children,
-}: PropsWithChildren<{ type: 'set' | 'start' | 'end' }>) {
-  const colour = useMemo(() => {
-    switch (type) {
-      case 'set':
-        return COLORS.PRIMARY_BLUE;
-      case 'start':
-        return COLORS.TIMER.START;
-      case 'end':
-        return COLORS.TIMER.END;
-      default:
-        throw new Error(`Unknown type: ${type satisfies never}`);
-    }
-  }, [type]);
-
-  return (
-    <span
-      style={{
-        textDecorationColor: colour,
-        textDecorationLine: 'underline',
-        textDecorationThickness: '3px',
-        textUnderlineOffset: '4px',
-        // textUnderlinePosition: 'under',
-        fontWeight: 'bold',
-      }}
-    >
-      {children}
     </span>
   );
 }

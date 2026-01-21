@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Period, PricePoint } from '../lib/pointUtils';
+import { ColorText } from './ColorText';
 
 export type Props = {
   points: PricePoint[];
@@ -28,9 +29,13 @@ export default function CheapestPeriod({ points, period }: Props) {
   }
 
   return (
-    <>
-      Avg <b>{periodAvg.toFixed(2)}</b>p/kWh {startPoint.label}–
-      {endPoint.endLabel}
-    </>
+    <span
+      style={{ flexGrow: 1, display: 'inline-flex', alignItems: 'baseline' }}
+    >
+      <ColorText type="start">{startPoint.label}</ColorText>–
+      <ColorText type="end">{endPoint.endLabel}</ColorText>
+      <span style={{ flexGrow: 1 }}></span>
+      <small>{periodAvg.toFixed(2)}p/kWh</small>
+    </span>
   );
 }

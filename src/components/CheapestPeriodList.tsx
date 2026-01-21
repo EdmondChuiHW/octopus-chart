@@ -2,12 +2,13 @@ import type { Period, PricePoint } from '../lib/pointUtils';
 import CheapestPeriod from './CheapestPeriod';
 
 import './CheapestPeriodList.css';
-import { ShowMoreList } from './ShowMoreList';
+import RadioForm from './RadioForm';
 
 export type Props = {
   points: PricePoint[];
   periods: Period[];
 
+  legend?: React.ReactNode;
   selectedIndex?: number;
   onChange?: (index: number) => void;
 };
@@ -15,6 +16,7 @@ export type Props = {
 export default function CheapestPeriodList({
   points,
   periods,
+  legend,
   selectedIndex,
   onChange,
 }: Props) {
@@ -23,28 +25,25 @@ export default function CheapestPeriodList({
   }
 
   return (
-    <form className="period-options">
-      <fieldset>
-        <legend>Period options</legend>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <ShowMoreList>
-            {periods.map((period, index) => {
-              return (
-                <label key={index}>
-                  <input
-                    type="radio"
-                    name="periodChoice"
-                    value={index}
-                    checked={index === selectedIndex}
-                    onChange={() => onChange?.(index)}
-                  />
-                  <CheapestPeriod points={points} period={period} />
-                </label>
-              );
-            })}
-          </ShowMoreList>
-        </div>
-      </fieldset>
-    </form>
+    <RadioForm legend={legend ?? 'Period options'}>
+      {periods.map((period, index) => {
+        return (
+          <label
+            key={index}
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <input
+              type="radio"
+              name="periodChoice"
+              value={index}
+              checked={index === selectedIndex}
+              onChange={() => onChange?.(index)}
+              style={{ marginInlineEnd: '4px' }}
+            />
+            <CheapestPeriod points={points} period={period} />
+          </label>
+        );
+      })}
+    </RadioForm>
   );
 }
