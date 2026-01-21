@@ -1,6 +1,7 @@
 .consumer {
   border-radius: 10px;
   padding: 1rem;
+  padding-inline: 0.2rem;
 }
 
 .consumer h2 {
