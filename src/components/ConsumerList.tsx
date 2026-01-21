@@ -8,16 +8,20 @@ export type Props = {
   points: PricePoint[];
 };
 
-export default function ConsumerList({ consumers, relativeNow }: Props) {
+export default function ConsumerList({
+  consumers,
+  relativeNow,
+  points,
+}: Props) {
   return (
     <>
-      {consumers.map(({ config, bestStartTimePoints }) => {
+      {consumers.map(({ config }) => {
         return (
           <Consumer
             key={config.name}
             config={config}
             relativeNow={relativeNow}
-            bestStartTimePoints={bestStartTimePoints}
+            points={points}
           />
         );
       })}

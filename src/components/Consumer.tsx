@@ -1,27 +1,49 @@
 import type { ConsumerConfig, TimerChoice } from '../lib/types';
 import StartTimeHint from './StartTimeHint';
 import type { PricePoint } from '../lib/pointUtils';
-import CheapestPeriod from './CheapestPeriod';
 import { useMemo, useState } from 'react';
 import { timerSetTimeMs } from '../lib/timerUtils';
-import { formatDuration, isAfter, sub, type Duration } from 'date-fns';
+import {
+  formatDuration,
+  isAfter,
+  milliseconds,
+  sub,
+  type Duration,
+} from 'date-fns';
 import StartTimeHintChart from './StartTimeHintChart';
 
 import './Consumer.css';
+import { millisecondsInHour } from 'date-fns/constants';
+import CheapestPeriodList from './CheapestPeriodList';
+import useBestPeriods from '../hooks/useBestPeriods';
 
 export type Props = {
   config: ConsumerConfig;
   relativeNow: Date | number;
 
-  bestStartTimePoints: PricePoint[];
+  points: PricePoint[];
 };
 
 export default function Consumer({
   config,
   relativeNow,
-  bestStartTimePoints: points,
+  points: allPoints,
 }: Props) {
   const { name, duration, timers } = config;
+
+  const diffInHours = milliseconds(config.duration) / millisecondsInHour;
+  const periods = useBestPeriods(allPoints, relativeNow, diffInHours);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(0);
+
+  const points = useMemo(() => {
+    const period = periods.at(selectedPeriod);
+    if (!period) return [];
+
+    if (period.index < 0 || period.index >= allPoints.length) return [];
+
+    return allPoints.slice(period.index, period.index + period.length);
+  }, [allPoints, selectedPeriod, periods]);
+
   const startMs = points.length === 0 ? -1 : points[0].startMs;
   const choices = useMemo<TimerChoice[]>(() => {
     if (startMs < 0) {
@@ -46,9 +68,11 @@ export default function Consumer({
     <div className="consumer">
       <h2>{name}</h2>
       <small>Run time: {formatDuration(config.duration)}</small>
-      <CheapestPeriod
-        points={points}
-        period={{ index: 0, length: points.length }}
+      <CheapestPeriodList
+        points={allPoints}
+        periods={periods}
+        selectedIndex={selectedPeriod}
+        onChange={setSelectedPeriod}
       />
       <StartTimeHint
         choices={choices}
