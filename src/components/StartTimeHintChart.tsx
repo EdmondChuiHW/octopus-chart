@@ -226,12 +226,7 @@ function makeChartOptions(): ChartOptions<'line'> {
           minRotation: 30,
           autoSkip: false,
           font: {
-            size: (ctx) => {
-              const thisTime = ctx.tick.value;
-              return thisTime === getTimeMs(ctx, DATASET_INDEXES.SET_TIME_LINE)
-                ? 12
-                : 12;
-            },
+            size: 14,
             weight: 'bold',
           },
           color: (ctx) => {
