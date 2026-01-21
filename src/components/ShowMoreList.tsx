@@ -2,7 +2,7 @@ import { type ReactNode, useState } from 'react';
 
 export function ShowMoreList({
   children,
-  initialCount = 3,
+  initialCount = 5,
 }: {
   children: ReactNode[];
   initialCount?: number;

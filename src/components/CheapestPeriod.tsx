@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import type { Period, PricePoint } from '../lib/pointUtils';
 import { ColorText } from './ColorText';
+import { formatTimeLocal } from '../lib/dateUtils';
+
+import './CheapestPeriod.css';
 
 export type Props = {
   points: PricePoint[];
@@ -29,13 +32,53 @@ export default function CheapestPeriod({ points, period }: Props) {
   }
 
   return (
+    <Inner
+      startMs={startPoint.startMs}
+      endMs={endPoint.endMs}
+      periodAvg={periodAvg}
+    />
+  );
+}
+
+function Inner({
+  startMs,
+  endMs,
+  periodAvg,
+}: {
+  startMs: number;
+  endMs: number;
+  periodAvg: number;
+}) {
+  const startLabel = useMemo(() => formatTimeLocal(startMs), [startMs]);
+  const endLabel = useMemo(() => formatTimeLocal(endMs), [endMs]);
+  const periodLabel = useMemo(() => periodAvg.toFixed(2), [periodAvg]);
+
+  return (
     <span
-      style={{ flexGrow: 1, display: 'inline-flex', alignItems: 'baseline' }}
+      style={{
+        flexGrow: 1,
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        textAlign: 'start',
+      }}
     >
-      <ColorText type="start">{startPoint.label}</ColorText>–
-      <ColorText type="end">{endPoint.endLabel}</ColorText>
-      <span style={{ flexGrow: 1 }}></span>
-      <small>{periodAvg.toFixed(2)}p/kWh</small>
+      <span style={{ flex: 1, display: 'inline-flex' }}>
+        <ColorText type="start">{startLabel}</ColorText>
+        <span
+          style={{
+            display: 'inline-flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+          }}
+        >
+          <span className="period-gap top radio-form-aware" aria-label="–" />
+          <span style={{ flex: 1 }} />
+        </span>
+      </span>
+      <span style={{ flex: 1 }}>
+        <ColorText type="end">{endLabel}</ColorText>
+      </span>
+      <small>{periodLabel}p/kWh</small>
     </span>
   );
 }

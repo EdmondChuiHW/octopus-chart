@@ -1,0 +1,6 @@
+.period-gap {
+  flex: 1;
+  border-bottom-width: 2px;
+  margin-bottom: -1px;
+  border-bottom-style: solid;
+}
