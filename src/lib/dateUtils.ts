@@ -5,6 +5,7 @@ import {
   type Duration,
   type FormatDistanceFn,
   type FormatDistanceToken,
+  formatDuration,
 } from 'date-fns';
 
 export function formatTimeLocal(date: DateArg<Date>): string {
@@ -14,8 +15,6 @@ export function formatTimeLocal(date: DateArg<Date>): string {
 
   return format(date, 'h:mmaaa');
 }
-
-import { formatDuration } from 'date-fns';
 
 const formatDistanceLocale: { [K in FormatDistanceToken]?: string } = {
   xMinutes: '{{count}}m',
