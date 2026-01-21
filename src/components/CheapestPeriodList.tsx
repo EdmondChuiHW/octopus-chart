@@ -25,7 +25,7 @@ export default function CheapestPeriodList({
   }
 
   return (
-    <RadioForm legend={legend ?? 'Period options'}>
+    <RadioForm legend={legend ?? 'Period options'} initialCount={3}>
       {periods.map((period, index) => {
         return (
           <label
