@@ -1,10 +1,14 @@
 import { type PropsWithChildren, useMemo } from 'react';
 import { COLORS } from '../lib/colors';
 
-export function ColorText({
-  type,
-  children,
-}: PropsWithChildren<{ type: 'set' | 'start' | 'end' }>) {
+import './ColorText.css';
+
+type Props = PropsWithChildren<{
+  type: 'set' | 'start' | 'end';
+  radioFormAware?: boolean;
+}>;
+
+export function ColorText({ type, children, radioFormAware = true }: Props) {
   const colour = useMemo(() => {
     switch (type) {
       case 'set':
@@ -20,14 +24,8 @@ export function ColorText({
 
   return (
     <span
-      style={{
-        textDecorationColor: colour,
-        textDecorationLine: 'underline',
-        textDecorationThickness: '3px',
-        textUnderlineOffset: '4px',
-        // textUnderlinePosition: 'under',
-        fontWeight: 'bold',
-      }}
+      className={`color-text${radioFormAware ? ' radio-form-aware' : ''}`}
+      style={{ textDecorationColor: colour }}
     >
       {children}
     </span>
