@@ -22,12 +22,15 @@ export type Props = {
 export default function Consumer({
   config,
   relativeNow,
-  points: allPoints,
+  points: pointsFromProps,
 }: Props) {
   const { name, duration, timers } = config;
 
   const diffInHours = milliseconds(config.duration) / millisecondsInHour;
-  const periods = useBestPeriods(allPoints, relativeNow, diffInHours);
+  const allPoints = useMemo(() => {
+    return pointsFromProps.filter((p) => isAfter(p.startMs, relativeNow));
+  }, [pointsFromProps, relativeNow]);
+  const periods = useBestPeriods(allPoints, diffInHours);
   const [selectedPeriod, setSelectedPeriod] = useState<number>(0);
 
   const points = useMemo(() => {
