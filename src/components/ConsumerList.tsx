@@ -1,6 +1,7 @@
 import type { PricePoint } from '../lib/pointUtils';
 import type { ConsumerBestTimes } from '../lib/types';
 import Consumer from './Consumer';
+import ConsumerEdit from './ConsumerEdit';
 
 export type Props = {
   consumers: ConsumerBestTimes[];
@@ -25,6 +26,7 @@ export default function ConsumerList({
           />
         );
       })}
+      <ConsumerEdit relativeNow={relativeNow} points={points} />
     </>
   );
 }

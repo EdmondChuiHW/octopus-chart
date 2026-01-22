@@ -17,12 +17,15 @@ export type Props = {
   relativeNow: Date | number;
 
   points: PricePoint[];
+
+  customHeader?: React.ReactNode;
 };
 
 export default function Consumer({
   config,
   relativeNow,
   points: pointsFromProps,
+  customHeader,
 }: Props) {
   const { name, duration, timers } = config;
 
@@ -32,6 +35,12 @@ export default function Consumer({
   }, [pointsFromProps, relativeNow]);
   const periods = useBestPeriods(allPoints, diffInHours);
   const [selectedPeriod, setSelectedPeriod] = useState<number>(0);
+
+  const prevConfig = useRef(config);
+  if (prevConfig.current !== config) {
+    prevConfig.current = config;
+    setSelectedPeriod(0);
+  }
 
   const points = useMemo(() => {
     const period = periods.at(selectedPeriod);
@@ -75,7 +84,7 @@ export default function Consumer({
 
   return (
     <div className="consumer">
-      <h2>{name}</h2>
+      {customHeader ?? <h2>{name}</h2>}
       <CheapestPeriodList
         points={allPoints}
         periods={periods}

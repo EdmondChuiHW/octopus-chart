@@ -24,7 +24,7 @@ export default function StartTimeHint({
   onChoiceChange,
 }: Props) {
   if (startMs < 0) {
-    return <>Best start time unavailable. Start anytime.</>;
+    return <div>Best start time unavailable. Start anytime.</div>;
   }
 
   if (choices.length === 0) {

@@ -29,8 +29,18 @@ const shortFormatDistance: FormatDistanceFn = (token, count) => {
   return template.replace('{{count}}', String(count));
 };
 
-export function formatShortDurationHoursMinsOnly(duration: Duration): string {
-  return formatDuration(duration, {
+export function formatShortDurationHoursMinsOnly(
+  duration: Readonly<Duration>,
+): string {
+  const hourMins = { ...duration };
+  if (duration.hours != null && !Number.isInteger(duration.hours)) {
+    const wholeHours = Math.floor(duration.hours);
+    hourMins.hours = wholeHours;
+    const minutes = Math.round((duration.hours - wholeHours) * 60);
+    hourMins.minutes ??= 0;
+    hourMins.minutes += minutes;
+  }
+  return formatDuration(hourMins, {
     format: ['hours', 'minutes'],
     delimiter: '',
     locale: { formatDistance: shortFormatDistance },
