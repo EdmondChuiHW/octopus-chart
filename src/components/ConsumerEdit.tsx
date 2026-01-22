@@ -11,24 +11,21 @@ type Props = {
 };
 
 export default function ConsumerEdit({ relativeNow, points }: Props) {
-  // Default config state (customize as needed)
   const [config, setConfig] = useState<ConsumerConfig>({
     name: '',
-    duration: { hours: 1 },
+    duration: { hours: 6 },
     timers: [],
-    // Add other default ConsumerConfig fields here if needed
   });
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
-    if (!isNaN(value) && value >= 0.5) {
-      setConfig((prev) => ({
-        ...prev,
-        duration: {
-          hours: value,
-        },
-      }));
-    }
+    if (isNaN(value) || value < 0.5) return;
+    setConfig((prev) => ({
+      ...prev,
+      duration: {
+        hours: value,
+      },
+    }));
   };
   const durationSliderId = useId();
 
