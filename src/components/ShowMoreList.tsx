@@ -8,6 +8,7 @@ export function ShowMoreList({
   initialCount?: number;
 }) {
   const [count, setCount] = useState(initialCount);
+  const remaining = children.length - count;
 
   return (
     <>
@@ -17,7 +18,7 @@ export function ShowMoreList({
           href="javascript:void(0)"
           onClick={() => setCount((c) => c + initialCount)}
         >
-          Show more
+          Show more {remaining > 0 ? `(${remaining})` : ''}
         </a>
       )}
     </>
