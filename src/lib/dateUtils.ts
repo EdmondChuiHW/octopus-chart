@@ -6,7 +6,11 @@ import {
   type FormatDistanceFn,
   type FormatDistanceToken,
   formatDuration,
+  milliseconds,
+  millisecondsToHours,
+  millisecondsToMinutes,
 } from 'date-fns';
+import { millisecondsInHour } from 'date-fns/constants';
 
 export function formatTimeLocal(date: DateArg<Date>): string {
   if (getMinutes(date) === 0) {
@@ -32,17 +36,31 @@ const shortFormatDistance: FormatDistanceFn = (token, count) => {
 export function formatShortDurationHoursMinsOnly(
   duration: Readonly<Duration>,
 ): string {
-  const hourMins = { ...duration };
-  if (duration.hours != null && !Number.isInteger(duration.hours)) {
-    const wholeHours = Math.floor(duration.hours);
-    hourMins.hours = wholeHours;
-    const minutes = Math.round((duration.hours - wholeHours) * 60);
-    hourMins.minutes ??= 0;
-    hourMins.minutes += minutes;
-  }
+  const hourMins = collapseHoursMins(duration);
   return formatDuration(hourMins, {
     format: ['hours', 'minutes'],
     delimiter: '',
     locale: { formatDistance: shortFormatDistance },
   });
+}
+
+export function formatDurationHoursMinsOnly(
+  duration: Readonly<Duration>,
+): string {
+  const hourMins = collapseHoursMins(duration);
+  return formatDuration(hourMins);
+}
+
+function collapseHoursMins(duration: Readonly<Duration>): Readonly<Duration> {
+  const ms = milliseconds(duration);
+
+  const wholeHours = millisecondsToHours(ms);
+  const subHours = ms - wholeHours * millisecondsInHour;
+  const wholeMinutes = millisecondsToMinutes(subHours);
+  // subMins are discarded
+
+  return {
+    hours: wholeHours,
+    minutes: wholeMinutes,
+  };
 }

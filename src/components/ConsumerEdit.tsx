@@ -1,9 +1,10 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import Consumer from './Consumer';
 import type { ConsumerConfig } from '../lib/types';
 import type { PricePoint } from '../lib/pointUtils';
 import { milliseconds } from 'date-fns';
 import { millisecondsInHour } from 'date-fns/constants';
+import { formatDurationHoursMinsOnly } from '../lib/dateUtils';
 
 type Props = {
   relativeNow: Date | number;
@@ -28,6 +29,10 @@ export default function ConsumerEdit({ relativeNow, points }: Props) {
     }));
   };
   const durationSliderId = useId();
+  const formatted = useMemo(
+    () => formatDurationHoursMinsOnly(config.duration),
+    [config.duration],
+  );
 
   return (
     <div>
@@ -39,7 +44,7 @@ export default function ConsumerEdit({ relativeNow, points }: Props) {
           <div>
             <h2>Any</h2>
             <label htmlFor={durationSliderId} style={{ display: 'block' }}>
-              Duration
+              Run time: <strong>{formatted}</strong>
             </label>
             <input
               id={durationSliderId}
