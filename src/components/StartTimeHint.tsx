@@ -30,8 +30,11 @@ export default function StartTimeHint({
   if (choices.length === 0) {
     return (
       <>
-        No timers applicable. Start manually at{' '}
-        <ColorText type="start">{formatTimeLocal(startMs)}</ColorText>
+        No timers applicable.{' '}
+        <div>
+          Start manually at{' '}
+          <ColorText type="start">{formatTimeLocal(startMs)}</ColorText>.
+        </div>
       </>
     );
   }
