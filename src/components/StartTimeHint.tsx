@@ -79,9 +79,15 @@ function TimerHint({ choice }: { choice: TimerChoice }) {
   })();
   return (
     <span style={{ textAlign: 'start' }}>
-      At <ColorText type="set">{setTimeStr}</ColorText>, set to{' '}
-      <ColorText type={modeStr}>{modeStr}</ColorText> in{' '}
-      <b>{formatShortDurationHoursMinsOnly(choice.timer.duration)}</b>
+      At{' '}
+      <ColorText type="set" radioFormAware>
+        {setTimeStr}
+      </ColorText>
+      , set to{' '}
+      <ColorText type={modeStr} radioFormAware>
+        {modeStr}
+      </ColorText>{' '}
+      in <b>{formatShortDurationHoursMinsOnly(choice.timer.duration)}</b>
     </span>
   );
 }

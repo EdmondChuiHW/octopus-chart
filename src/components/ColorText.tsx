@@ -8,7 +8,7 @@ type Props = PropsWithChildren<{
   radioFormAware?: boolean;
 }>;
 
-export function ColorText({ type, children, radioFormAware = true }: Props) {
+export function ColorText({ type, children, radioFormAware }: Props) {
   const colour = useMemo(() => {
     switch (type) {
       case 'set':

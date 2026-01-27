@@ -63,7 +63,9 @@ function Inner({
       }}
     >
       <span style={{ flex: 1, display: 'inline-flex' }}>
-        <ColorText type="start">{startLabel}</ColorText>
+        <ColorText type="start" radioFormAware>
+          {startLabel}
+        </ColorText>
         <span
           style={{
             display: 'inline-flex',
@@ -76,7 +78,9 @@ function Inner({
         </span>
       </span>
       <span style={{ flex: 1 }}>
-        <ColorText type="end">{endLabel}</ColorText>
+        <ColorText type="end" radioFormAware>
+          {endLabel}
+        </ColorText>
       </span>
       <span style={{ fontFamily: 'monospace', fontSize: 'small' }}>
         {periodLabel}p/kWh

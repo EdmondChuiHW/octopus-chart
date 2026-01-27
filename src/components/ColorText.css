@@ -1,8 +1,12 @@
 .color-text {
-  text-decoration-line: none;
+  text-decoration-line: underline;
   text-decoration-thickness: 3px;
   text-underline-offset: 4px;
   font-weight: bold;
+}
+
+.color-text.radio-form-aware {
+  text-decoration-line: none;
 }
 
 .radio-form input[type='radio']:checked ~ * .color-text.radio-form-aware {
