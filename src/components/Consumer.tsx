@@ -74,13 +74,20 @@ export default function Consumer({
   const prevChoices = useRef(choices);
   if (prevChoices.current !== choices) {
     prevChoices.current = choices;
-    setChoiceIndex(0);
+    setChoiceIndex((prev) => {
+      return prev >= choices.length ? 0 : prev;
+    });
   }
 
   const legend = useMemo(
     () => formatShortDurationHoursMinsOnly(config.duration),
     [config.duration],
   );
+
+  function handlSelectedPeriodChange(index: number) {
+    setSelectedPeriod(index);
+    setChoiceIndex(0);
+  }
 
   return (
     <div className="consumer">
@@ -90,7 +97,7 @@ export default function Consumer({
         periods={periods}
         legend={`Period options (${legend})`}
         selectedIndex={selectedPeriod}
-        onChange={setSelectedPeriod}
+        onChange={handlSelectedPeriodChange}
       />
       <StartTimeHint
         choices={choices}
