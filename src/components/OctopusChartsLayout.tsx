@@ -30,6 +30,13 @@ export default function OctopusChartsLayout({
 
       <div className="chart-wrap">{barChart}</div>
 
+      {bestPeriods && (
+        <>
+          <h1 id="cheapest">Best periods</h1>
+          <div className="best-periods">{bestPeriods}</div>
+        </>
+      )}
+
       <h1 className="clocks-group-title">Today</h1>
       <div>
         <div className="clocks-row">
@@ -45,13 +52,6 @@ export default function OctopusChartsLayout({
           <div className="rate-clock">{tomorrowPmClock}</div>
         </div>
       </div>
-
-      {bestPeriods && (
-        <>
-          <h1 id="cheapest">Best periods</h1>
-          <div className="best-periods">{bestPeriods}</div>
-        </>
-      )}
 
       <div className="note">{note}</div>
     </div>
