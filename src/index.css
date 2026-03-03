@@ -46,7 +46,9 @@ h1:not(:first-child) {
   margin-top: 1rem;
 }
 
-button {
+button,
+.btn {
+  border-style: solid;
   border-radius: 8px;
   padding: 0.4em 0.8rem;
   font-size: 1rem;
@@ -57,6 +59,8 @@ button {
   transition: border-color 0.25s;
   border-color: rgba(100, 108, 255, 0.5);
 }
-button:hover {
+button:hover,
+.btn:hover {
+  color: inherit;
   border-color: #646cff;
 }

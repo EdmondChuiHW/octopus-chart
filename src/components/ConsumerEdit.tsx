@@ -13,7 +13,7 @@ type Props = {
 
 export default function ConsumerEdit({ relativeNow, points }: Props) {
   const [config, setConfig] = useState<ConsumerConfig>({
-    name: '',
+    name: 'Any',
     duration: { hours: 6 },
     timers: [],
   });

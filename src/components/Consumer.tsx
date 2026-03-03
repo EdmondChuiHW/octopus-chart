@@ -11,6 +11,7 @@ import { millisecondsInHour } from 'date-fns/constants';
 import CheapestPeriodList from './CheapestPeriodList';
 import useBestPeriods from '../hooks/useBestPeriods';
 import { formatShortDurationHoursMinsOnly } from '../lib/dateUtils';
+import { RemindButton } from './RemindButton';
 
 export type Props = {
   config: ConsumerConfig;
@@ -105,7 +106,15 @@ export default function Consumer({
         selectedChoiceIndex={choiceIndex}
         onChoiceChange={setChoiceIndex}
       />
-
+      {choices[choiceIndex] ? (
+        <RemindButton
+          type="choice"
+          applianceName={name}
+          choice={choices[choiceIndex]}
+        />
+      ) : (
+        <RemindButton type="manual" applianceName={name} time={startMs} />
+      )}
       {choices[choiceIndex] && (
         <StartTimeHintChart
           relativeNow={relativeNow}
