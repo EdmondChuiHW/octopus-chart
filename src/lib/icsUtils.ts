@@ -1,6 +1,4 @@
 import { createEvent, type EventAttributes } from 'ics';
-import { formatShortDurationHoursMinsOnly } from './dateUtils';
-import type { TimerChoice } from './types';
 import { getTime, type DateArg } from 'date-fns';
 
 function buildEventUri(
@@ -35,39 +33,12 @@ function buildEventUri(
 }
 
 export function generateICSUri(
-  choice: TimerChoice,
-  applianceName: string,
-  deepLinkUrl: string,
-): string {
-  const dtStart = choice.setTime;
-
-  const modeStr = (() => {
-    switch (choice.timer.mode) {
-      case 'starts-in':
-        return 'start';
-      case 'ends-in':
-        return 'end';
-      default:
-        throw new Error(
-          `Unknown timer mode: ${choice.timer.mode satisfies never}`,
-        );
-    }
-  })();
-  const durationStr = formatShortDurationHoursMinsOnly(choice.timer.duration);
-
-  const summary = `Set ${applianceName} to ${modeStr} in ${durationStr}`;
-  const description = `Time to set your ${applianceName} to ${modeStr} in ${durationStr}.`;
-  return buildEventUri(dtStart.getTime(), summary, description, deepLinkUrl);
-}
-
-export function generateICSUriManual(
   startMs: DateArg<Date>,
-  applianceName: string,
   deepLinkUrl: string,
+  summary: string,
+  description: string,
 ): string {
   const dtStart = getTime(startMs);
 
-  const summary = `Start ${applianceName}`;
-  const description = `Time to start your ${applianceName}.`;
   return buildEventUri(dtStart, summary, description, deepLinkUrl);
 }
