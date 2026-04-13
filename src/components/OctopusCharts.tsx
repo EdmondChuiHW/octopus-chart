@@ -131,7 +131,9 @@ export default function OctopusCharts() {
             setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
           />
         }
-        verticalChart={<VerticalPriceChart points={points} />}
+        verticalChart={
+          <VerticalPriceChart points={points} consumerBestTimes={consumers} />
+        }
         todayAmClock={
           <RateClock
             dateKey={todayKey}

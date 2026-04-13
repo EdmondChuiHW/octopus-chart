@@ -85,16 +85,35 @@ export default function PriceChart({
       return ret;
     }
 
+    const bestTimesByStartMs = new Map<
+      number,
+      { point: PricePoint; durationLabels: Set<string> }
+    >();
+
+    consumerBestTimes.forEach(({ config, bestStartTimePoints }) => {
+      const best = bestStartTimePoints[0];
+      const durationLabel = formatShortDurationHoursMinsOnly(config.duration);
+      const existing = bestTimesByStartMs.get(best.x);
+
+      if (existing) {
+        existing.durationLabels.add(durationLabel);
+      } else {
+        bestTimesByStartMs.set(best.x, {
+          point: best,
+          durationLabels: new Set([durationLabel]),
+        });
+      }
+    });
+
     const consumersDataset: ChartDataset<'bar', PricePoint[]> = {
       hidden: true,
       label: 'Consumer best time annotations',
-      data: consumerBestTimes.map(({ config, bestStartTimePoints }) => {
-        const best = bestStartTimePoints[0];
-        return {
-          ...best,
-          label: `Best: ${formatShortDurationHoursMinsOnly(config.duration)}`,
-        };
-      }),
+      data: [...bestTimesByStartMs.values()].map(
+        ({ point, durationLabels }) => ({
+          ...point,
+          label: `Best: ${[...durationLabels].join(', ')}`,
+        }),
+      ),
     };
     ret[DATASET_INDEX.CONSUMER_BEST_TIMES] = consumersDataset;
 
@@ -126,11 +145,10 @@ export default function PriceChart({
 
       const label: AnnotationOptions<'label'> = {
         type: 'label',
-        id: `consumer-best-time-${point.label}-${i}`,
+        id: `consumer-best-time-${point.x}-${i}`,
         drawTime: 'afterDraw',
         adjustScaleRange: false,
         display: (ctx) => getActiveIndex(ctx) !== categoryIndex,
-        // TODO: handle multiple best times at the same category index
         borderColor: COLORS.PRIMARY_BLUE,
         xMin: categoryIndex,
         xMax: categoryIndex,
