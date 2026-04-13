@@ -6,6 +6,7 @@ export default function OctopusChartsPlaceholder() {
       <OctopusChartsLayout
         hoverInfo={null}
         barChart={null}
+        verticalChart={null}
         todayAmClock={<div className="chart-container"></div>}
         todayPmClock={<div className="chart-container"></div>}
         tomorrowAmClock={<div className="chart-container"></div>}

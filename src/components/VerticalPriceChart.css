@@ -1,0 +1,5 @@
+.vertical-price-chart-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  width: 100%;
+}

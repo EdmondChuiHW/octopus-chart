@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import PriceChart from './PriceChart';
+import VerticalPriceChart from './VerticalPriceChart';
 import RateClock from './RateClock';
 import { buildPointsData } from '../lib/pointUtils';
 import { CHART_DATA, TIMINGS } from '../lib/constants';
@@ -130,6 +131,7 @@ export default function OctopusCharts() {
             setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
           />
         }
+        verticalChart={<VerticalPriceChart points={points} />}
         todayAmClock={
           <RateClock
             dateKey={todayKey}

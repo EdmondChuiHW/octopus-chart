@@ -12,6 +12,10 @@
   padding: 0.5rem;
 }
 
+.octopus-charts-layout .vertical-chart-wrap {
+  width: 100%;
+}
+
 .octopus-charts-layout .best-periods {
   display: flex;
   gap: 0.8rem;

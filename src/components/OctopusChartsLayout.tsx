@@ -2,6 +2,7 @@ import './OctopusChartsLayout.css';
 
 export default function OctopusChartsLayout({
   barChart,
+  verticalChart,
   todayAmClock,
   todayPmClock,
   tomorrowAmClock,
@@ -11,6 +12,7 @@ export default function OctopusChartsLayout({
   hoverInfo,
 }: {
   barChart: React.ReactNode;
+  verticalChart?: React.ReactNode;
   todayAmClock: React.ReactNode;
   todayPmClock: React.ReactNode;
   tomorrowAmClock: React.ReactNode;
@@ -29,6 +31,12 @@ export default function OctopusChartsLayout({
       {hoverInfo && <div className="hover-info">{hoverInfo}</div>}
 
       <div className="chart-wrap">{barChart}</div>
+      {verticalChart && (
+        <>
+          <h1 id="cheapest">All periods</h1>
+          <div className="vertical-chart-wrap">{verticalChart}</div>
+        </>
+      )}
 
       {bestPeriods && (
         <>
