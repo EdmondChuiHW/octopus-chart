@@ -77,7 +77,7 @@ export default function VerticalPriceChart({
         borderRadius: 6,
         color: '#ffffff',
         textStrokeColor: 'black',
-        textStrokeWidth: 6,
+        textStrokeWidth: 8,
         font: {
           family: 'Inter, system-ui, sans-serif',
           size: 18,
