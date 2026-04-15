@@ -31,7 +31,7 @@ ChartJS.register(
   annotationPlugin,
 );
 
-const BAR_HEIGHT = 40;
+const BAR_HEIGHT = 44;
 
 const plugins: Plugin[] = [axisTickPluginFactory('y', 4)];
 
@@ -154,7 +154,7 @@ export default function VerticalPriceChart({
         borderColor: 'transparent',
         borderWidth: 0,
         font: {
-          size: 16,
+          size: 20,
           weight: 'bold',
         },
         padding: {
@@ -217,7 +217,7 @@ export default function VerticalPriceChart({
           type: 'category',
           ticks: {
             color: '#ffffff',
-            font: { size: 16 },
+            font: { size: 20, weight: 'bold' },
             callback(value) {
               const index = Number(value);
               const point = points.at(index);
