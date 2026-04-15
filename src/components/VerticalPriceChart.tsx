@@ -86,18 +86,16 @@ export default function VerticalPriceChart({
         padding: 0,
         content: `${point.y.toFixed(2)}p`,
         position: {
-          x: 'start',
+          x: point.y >= 0 ? 'start' : 'end',
           y: 'center',
         },
-        xAdjust: 4,
+        xAdjust: 4 * (point.y >= 0 ? 1 : -1),
         display: true,
       })),
     [points],
   );
 
-  const consumerBestTimeAnnotations = useMemo<
-    AnnotationOptions<'label'>[]
-  >(() => {
+  const consumerBestTimeAnnotations = useMemo<AnnotationOptions[]>(() => {
     if (!consumerBestTimes?.length) return [];
 
     const durationLabelByStartMs = new Map<number, Set<string>>();
@@ -112,49 +110,70 @@ export default function VerticalPriceChart({
       }
     });
 
-    const annotations: AnnotationOptions<'label'>[] = [];
+    const annotations: AnnotationOptions[] = [];
+    const allVals = points.map((p) => p.y);
+    const maxVal = Math.max(...allVals);
+
     points.forEach((point, index) => {
       const labels = durationLabelByStartMs.get(point.startMs);
       if (!labels?.size) return;
 
-      const content = 'Best: ' + [...labels].join(', ');
+      const content = [...labels].join(', ');
+
+      annotations.push({
+        type: 'line',
+        id: `vertical-consumer-best-time-${point.x}-${index}`,
+        drawTime: 'afterDraw',
+        adjustScaleRange: false,
+        scaleID: 'y',
+        value: index - 0.5,
+        borderColor: COLORS.PRIMARY_BLUE,
+        borderWidth: 4,
+        display: true,
+        z: -1,
+      } as AnnotationOptions<'line'>);
 
       annotations.push({
         type: 'label',
         id: `vertical-consumer-best-time-${point.x}-${index}`,
         drawTime: 'afterDraw',
-        adjustScaleRange: true,
-        xMin: point.y,
-        xMax: point.y,
-        yMin: index,
-        yMax: index,
-        borderRadius: 6,
+        adjustScaleRange: false,
+        // TODO use proper chart area bounds
+        xValue: maxVal * 1.14,
+        yValue: index - 0.5,
+        display: true,
+        borderRadius: {
+          topLeft: 0,
+          topRight: 0,
+          bottomLeft: 8,
+          bottomRight: 8,
+        },
+        content,
+        color: '#ffffff',
         backgroundColor: COLORS.PRIMARY_BLUE,
         borderColor: 'transparent',
         borderWidth: 0,
-        color: '#ffffff',
         font: {
           size: 16,
           weight: 'bold',
         },
         padding: {
           x: 8,
-          y: 4,
+          top: 0,
+          bottom: 4,
         },
-        content,
         position: {
-          x: 'start',
-          y: 'center',
+          x: 'end',
+          y: 'start',
         },
-        xAdjust: 8,
-        display: true,
-      });
+        z: -1,
+      } as AnnotationOptions<'label'>);
     });
 
     return annotations;
   }, [consumerBestTimes, points]);
 
-  const annotations = useMemo<AnnotationOptions<'label'>[]>(
+  const annotations = useMemo<AnnotationOptions[]>(
     () => [...priceAnnotations, ...consumerBestTimeAnnotations],
     [priceAnnotations, consumerBestTimeAnnotations],
   );
