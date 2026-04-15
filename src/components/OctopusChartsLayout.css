@@ -4,6 +4,11 @@
   gap: 0.8rem;
 }
 
+.octopus-charts-layout .chart-wrap {
+  height: clamp(140px, 15vh, 520px);
+  position: relative;
+}
+
 .octopus-charts-layout .hover-info {
   position: sticky;
   top: 0;

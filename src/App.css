@@ -12,11 +12,6 @@
   font-size: 0.95rem;
 }
 
-.chart-wrap {
-  height: clamp(180px, 20vh, 520px);
-  position: relative;
-  border-radius: 10px;
-}
 .placeholder {
   color: #ffe;
   padding: 2rem;

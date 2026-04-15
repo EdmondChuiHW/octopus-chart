@@ -170,6 +170,9 @@ export default function VerticalPriceChart({
         xAxisKey: 'y',
         yAxisKey: 'x',
       },
+      layout: {
+        padding: 0,
+      },
       borderRadius: BAR_HEIGHT / 2,
       barPercentage: 0.95,
       categoryPercentage: 0.95,

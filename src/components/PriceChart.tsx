@@ -302,6 +302,9 @@ function makeOptions() {
         annotations: [],
       },
     },
+    layout: {
+      padding: 0,
+    },
     scales: {
       x: {
         type: 'category',

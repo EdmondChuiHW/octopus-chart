@@ -24,18 +24,17 @@ export default function OctopusChartsLayout({
   return (
     <div className="octopus-charts-layout">
       <header className="app-header">
-        <h1>Agile Octopus</h1>
-        <div className="subtitle">Half-hourly rates (London)</div>
+        <h1>Agile Octopus (London)</h1>
       </header>
 
       {hoverInfo && <div className="hover-info">{hoverInfo}</div>}
 
       <div className="chart-wrap">{barChart}</div>
       {verticalChart && (
-        <>
+        <section>
           <h1 id="cheapest">All periods</h1>
           <div className="vertical-chart-wrap">{verticalChart}</div>
-        </>
+        </section>
       )}
 
       {bestPeriods && (
