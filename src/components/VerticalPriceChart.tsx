@@ -31,7 +31,7 @@ ChartJS.register(
   annotationPlugin,
 );
 
-const BAR_HEIGHT = 36;
+const BAR_HEIGHT = 40;
 
 const plugins: Plugin[] = [axisTickPluginFactory('y', 4)];
 
@@ -75,13 +75,13 @@ export default function VerticalPriceChart({
         yMin: index,
         yMax: index,
         borderRadius: 6,
-        backgroundColor: 'transparent',
         color: '#ffffff',
         textStrokeColor: 'black',
-        textStrokeWidth: 4,
+        textStrokeWidth: 6,
         font: {
-          size: 16,
-          weight: 'bold',
+          family: 'Inter, system-ui, sans-serif',
+          size: 18,
+          weight: 'bolder',
         },
         padding: 0,
         content: `${point.y.toFixed(2)}p`,
@@ -89,7 +89,7 @@ export default function VerticalPriceChart({
           x: 'start',
           y: 'center',
         },
-        xAdjust: 12,
+        xAdjust: 4,
         display: true,
       })),
     [points],
