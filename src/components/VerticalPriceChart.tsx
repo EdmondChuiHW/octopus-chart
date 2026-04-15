@@ -1,6 +1,6 @@
 import { Bar } from 'react-chartjs-2';
-import type { ChartOptions, ChartData, ChartDataset } from 'chart.js';
-import { useMemo } from 'react';
+import type { ChartOptions, ChartData, ChartDataset, Plugin } from 'chart.js';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   Chart as ChartJS,
   BarElement,
@@ -18,6 +18,8 @@ import type { ConsumerBestTimes } from '../lib/types';
 import { COLORS } from '../lib/colors';
 import { formatShortDurationHoursMinsOnly } from '../lib/dateUtils';
 import './VerticalPriceChart.css';
+import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
+import { setChartActiveIndex } from '../hooks/useActiveChartIndex';
 
 ChartJS.register(
   LinearScale,
@@ -31,6 +33,8 @@ ChartJS.register(
 
 const BAR_HEIGHT = 36;
 
+const plugins: Plugin[] = [axisTickPluginFactory('y', 4)];
+
 export default function VerticalPriceChart({
   points,
   consumerBestTimes,
@@ -38,21 +42,23 @@ export default function VerticalPriceChart({
   points: PricePoint[];
   consumerBestTimes?: ConsumerBestTimes[];
 }) {
-  const data = useMemo<ChartData<'bar', number[], string>>(() => {
+  const data = useMemo<ChartData<'bar', PricePoint[], string>>(() => {
     return {
       labels: points.map((point) => point.label),
       datasets: [
         {
           label: 'p/kWh (inc VAT)',
-          data: points.map((point) => point.y),
-          backgroundColor: points.map((point) => point.backgroundColor),
-          borderColor: points.map(
-            (point) => point.borderColor ?? 'transparent',
-          ),
-          borderWidth: points.map((point) =>
-            point.status === 'active' ? 4 : 0,
-          ),
-        } as ChartDataset<'bar', number[]>,
+          data: points,
+          backgroundColor: (ctx) => {
+            return points.at(ctx.dataIndex)?.backgroundColor;
+          },
+          borderColor: (ctx) => {
+            return points.at(ctx.dataIndex)?.borderColor ?? 'transparent';
+          },
+          borderWidth: (ctx) => {
+            return points.at(ctx.dataIndex)?.status === 'active' ? 4 : 0;
+          },
+        } as ChartDataset<'bar', PricePoint[]>,
       ],
     };
   }, [points]);
@@ -159,6 +165,11 @@ export default function VerticalPriceChart({
       maintainAspectRatio: false,
       indexAxis: 'y',
       events: [],
+      hover: {},
+      parsing: {
+        xAxisKey: 'y',
+        yAxisKey: 'x',
+      },
       borderRadius: BAR_HEIGHT / 2,
       barPercentage: 0.95,
       categoryPercentage: 0.95,
@@ -181,6 +192,7 @@ export default function VerticalPriceChart({
           display: false,
         },
         y: {
+          type: 'category',
           ticks: {
             color: '#ffffff',
             font: { size: 16 },
@@ -189,6 +201,10 @@ export default function VerticalPriceChart({
               const point = points.at(index);
               return point?.tickLabel;
             },
+            align: 'end',
+            labelOffset: -10,
+            includeBounds: true,
+            padding: 8,
           },
           grid: { display: false },
         },
@@ -197,10 +213,16 @@ export default function VerticalPriceChart({
   }, [annotations, points]);
   const chartHeight = points.length * BAR_HEIGHT;
 
+  const chartRef = useRef(null);
+  useEffect(() => {
+    const activeIndex = points.findIndex((p) => p.status === 'active');
+    setChartActiveIndex(chartRef.current, activeIndex);
+  }, [points]);
+
   return (
     <div className="vertical-price-chart-container">
       <div style={{ position: 'relative', height: chartHeight }}>
-        <Bar options={options} data={data} />
+        <Bar options={options} data={data} plugins={plugins} ref={chartRef} />
       </div>
     </div>
   );

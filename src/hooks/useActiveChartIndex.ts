@@ -14,7 +14,7 @@ export default function useActiveChartIndex<T extends ChartJS>(
   return ref;
 }
 
-function setChartActiveIndex(
+export function setChartActiveIndex(
   chart: ChartJS | undefined | null,
   index: number,
   chartUpdateMode: 'none' | 'default' = 'default',
