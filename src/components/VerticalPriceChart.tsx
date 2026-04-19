@@ -125,8 +125,9 @@ export default function VerticalPriceChart({
         id: `vertical-consumer-best-time-${point.x}-${index}`,
         drawTime: 'afterDraw',
         adjustScaleRange: false,
-        scaleID: 'y',
-        value: index - 0.5,
+        xMax: maxVal,
+        yMin: index - 0.5,
+        yMax: index - 0.5,
         borderColor: COLORS.PRIMARY_BLUE,
         borderWidth: 4,
         display: true,
@@ -138,8 +139,7 @@ export default function VerticalPriceChart({
         id: `vertical-consumer-best-time-${point.x}-${index}`,
         drawTime: 'afterDraw',
         adjustScaleRange: false,
-        // TODO use proper chart area bounds
-        xValue: maxVal * 1.14,
+        xValue: maxVal,
         yValue: index - 0.5,
         display: true,
         borderRadius: {
