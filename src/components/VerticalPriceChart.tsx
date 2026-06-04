@@ -86,10 +86,10 @@ export default function VerticalPriceChart({
         padding: 0,
         content: `${point.y.toFixed(2)}p`,
         position: {
-          x: point.y >= 0 ? 'start' : 'end',
+          x: 'start',
           y: 'center',
         },
-        xAdjust: 4 * (point.y >= 0 ? 1 : -1),
+        xAdjust: 4,
         display: true,
       })),
     [points],
