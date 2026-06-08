@@ -9,7 +9,8 @@
     "lint": "eslint . --fix",
     "preview": "vite preview",
     "test": "vitest",
-    "prettier": "prettier --list-different --write ."
+    "prettier": "prettier --list-different --write .",
+    "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.17",
