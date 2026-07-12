@@ -15,6 +15,24 @@ export const ResponseSchema = z.object({
   results: z.array(ApiPricePointSchema),
 });
 
+export const AgilePredictPriceSchema = z.object({
+  date_time: z.string(),
+  agile_pred: z.number(),
+  agile_low: z.number(),
+  agile_high: z.number(),
+  is_published: z.boolean().optional(),
+});
+
+export type AgilePredictPrice = z.infer<typeof AgilePredictPriceSchema>;
+
+export const AgilePredictForecastSchema = z.object({
+  name: z.string(),
+  created_at: z.string(),
+  prices: z.array(AgilePredictPriceSchema),
+});
+
+export type AgilePredictForecast = z.infer<typeof AgilePredictForecastSchema>;
+
 export type Timer = {
   mode: 'starts-in' | 'ends-in';
   duration: Duration;

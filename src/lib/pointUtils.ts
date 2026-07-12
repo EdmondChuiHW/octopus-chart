@@ -10,7 +10,7 @@ import { CHART_DATA } from './constants';
 
 export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
 
-export type PricePoint = {
+type PricePointBase = {
   // x is the start timestamp (ms) used by the timeseries scale
   x: number;
   // y is the numeric value (p/kWh inc VAT)
@@ -25,6 +25,18 @@ export type PricePoint = {
   borderColor: string | undefined;
 };
 
+export type ConfirmedPoint = PricePointBase & {
+  isConfirmed: true;
+};
+
+export type PredictedPoint = PricePointBase & {
+  isConfirmed: false;
+  low: number;
+  high: number;
+};
+
+export type PricePoint = ConfirmedPoint | PredictedPoint;
+
 export type Period = {
   index: number;
   length: number;
@@ -38,8 +50,8 @@ export type Period = {
 export function buildPointsData(
   points: ApiPricePoint[],
   nowMs: number,
-): PricePoint[] {
-  const dataPoints: PricePoint[] = [];
+): ConfirmedPoint[] {
+  const dataPoints: ConfirmedPoint[] = [];
 
   if (points.length === 0) {
     return dataPoints;
@@ -65,7 +77,7 @@ export function buildPointsData(
 
     const startStr = formatTimeLocal(p.valid_from);
 
-    const datum: PricePoint = {
+    const datum: ConfirmedPoint = {
       x: start,
       y: v,
       startMs: start,
@@ -76,6 +88,7 @@ export function buildPointsData(
       backgroundColor,
       borderColor,
       status,
+      isConfirmed: true,
     };
     dataPoints.push(datum);
   }

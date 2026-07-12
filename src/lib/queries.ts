@@ -1,6 +1,7 @@
 import { type QueryFunctionContext } from '@tanstack/react-query';
-import { ResponseSchema } from '../lib/types';
-import type { ApiPricePoint } from '../lib/types';
+import { z } from 'zod';
+import { ResponseSchema, AgilePredictForecastSchema } from '../lib/types';
+import type { ApiPricePoint, AgilePredictPrice } from '../lib/types';
 import { addDays, sub } from 'date-fns';
 import { CHART_DATA } from './constants';
 
@@ -41,4 +42,26 @@ export async function fetchOctopusPrices(
 
   results.sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
   return results;
+}
+
+export async function fetchAgilePredict(
+  ctx: QueryFunctionContext<[string, string]>,
+): Promise<AgilePredictPrice[]> {
+  const [, tariff] = ctx.queryKey;
+  const region = tariff.split('-').pop() ?? '';
+  const url = `https://agileforecast.co.uk/api/${encodeURIComponent(region)}?hours=72`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Agile Forecast API returned ${res.status} ${res.statusText}`);
+  }
+
+  const prices = z
+    .array(AgilePredictForecastSchema)
+    .safeParse(await res.json());
+  if (!prices.success) {
+    throw new Error(`Agile Forecast response validation failed: ${prices.error.message}`);
+  }
+
+  return prices.data[0]?.prices ?? [];
 }

@@ -8,7 +8,11 @@ import {
   Tooltip,
   Title,
   Legend,
+  Filler,
   CategoryScale,
+  LineController,
+  LineElement,
+  PointElement,
 } from 'chart.js';
 import annotationPlugin, {
   type AnnotationOptions,
@@ -27,7 +31,11 @@ ChartJS.register(
   Tooltip,
   Title,
   Legend,
+  Filler,
   CategoryScale,
+  LineController,
+  LineElement,
+  PointElement,
   annotationPlugin,
 );
 
@@ -42,25 +50,65 @@ export default function VerticalPriceChart({
   points: PricePoint[];
   consumerBestTimes?: ConsumerBestTimes[];
 }) {
-  const data = useMemo<ChartData<'bar', PricePoint[], string>>(() => {
+  const data = useMemo(() => {
+    const datasets: (
+      | ChartDataset<'bar', PricePoint[]>
+      | ChartDataset<'line', (number | null)[]>
+    )[] = [
+      {
+        type: 'bar',
+        label: 'p/kWh (inc VAT)',
+        data: points,
+        backgroundColor: (ctx) => {
+          return points.at(ctx.dataIndex)?.backgroundColor;
+        },
+        borderColor: (ctx) => {
+          return points.at(ctx.dataIndex)?.borderColor ?? 'transparent';
+        },
+        borderWidth: (ctx) => {
+          return points.at(ctx.dataIndex)?.status === 'active' ? 4 : 0;
+        },
+      } as ChartDataset<'bar', PricePoint[]>,
+    ];
+
+    if (points.some((p) => !p.isConfirmed)) {
+      datasets.push(
+        {
+          type: 'line',
+          data: points.map((p) => (!p.isConfirmed ? p.low : null)),
+          borderColor: 'transparent',
+          pointRadius: 0,
+          fill: false,
+          order: 1,
+          animation: false,
+        } as ChartDataset<'line', (number | null)[]>,
+        {
+          type: 'line',
+          data: points.map((p) => (!p.isConfirmed ? p.high : null)),
+          borderColor: 'transparent',
+          backgroundColor: 'rgba(195,155,211,0.4)',
+          pointRadius: 0,
+          fill: '-1',
+          order: 1,
+          animation: false,
+        } as ChartDataset<'line', (number | null)[]>,
+        {
+          type: 'line',
+          label: 'Prediction',
+          data: points.map((p) => (!p.isConfirmed ? p.y : null)),
+          borderColor: COLORS.PREDICTION,
+          pointRadius: 0,
+          fill: false,
+          order: 3,
+          animation: false,
+        } as ChartDataset<'line', (number | null)[]>,
+      );
+    }
+
     return {
       labels: points.map((point) => point.label),
-      datasets: [
-        {
-          label: 'p/kWh (inc VAT)',
-          data: points,
-          backgroundColor: (ctx) => {
-            return points.at(ctx.dataIndex)?.backgroundColor;
-          },
-          borderColor: (ctx) => {
-            return points.at(ctx.dataIndex)?.borderColor ?? 'transparent';
-          },
-          borderWidth: (ctx) => {
-            return points.at(ctx.dataIndex)?.status === 'active' ? 4 : 0;
-          },
-        } as ChartDataset<'bar', PricePoint[]>,
-      ],
-    };
+      datasets,
+    } as unknown as ChartData<'bar'>;
   }, [points]);
 
   const priceAnnotations = useMemo<AnnotationOptions<'label'>[]>(
@@ -84,7 +132,9 @@ export default function VerticalPriceChart({
           weight: 'bolder',
         },
         padding: 0,
-        content: `${point.y.toFixed(2)}p`,
+        content: point.isConfirmed
+          ? `${point.y.toFixed(2)}p`
+          : `${point.low.toFixed(2)}–${point.high.toFixed(2)}p`,
         position: {
           x: 'start',
           y: 'center',

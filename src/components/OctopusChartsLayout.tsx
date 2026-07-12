@@ -10,6 +10,7 @@ export default function OctopusChartsLayout({
   bestPeriods,
   note,
   hoverInfo,
+  predictionToggle,
 }: {
   barChart: React.ReactNode;
   verticalChart?: React.ReactNode;
@@ -20,11 +21,13 @@ export default function OctopusChartsLayout({
   bestPeriods: React.ReactNode;
   note: React.ReactNode;
   hoverInfo?: React.ReactNode;
+  predictionToggle?: React.ReactNode;
 }) {
   return (
     <div className="octopus-charts-layout">
       <header className="app-header">
         <h1>Agile Octopus (London)</h1>
+        {predictionToggle}
       </header>
 
       {hoverInfo && <div className="hover-info">{hoverInfo}</div>}

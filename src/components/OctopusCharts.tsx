@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOctopusPrices } from '../hooks/useOctopusPrices';
+import { useAgilePredict } from '../hooks/useAgilePredict';
 import PriceChart from './PriceChart';
 import VerticalPriceChart from './VerticalPriceChart';
 import RateClock from './RateClock';
+import PredictionToggle from './PredictionToggle';
 import { buildPointsData } from '../lib/pointUtils';
+import { mergeChartData } from '../lib/predictionUtils';
 import { CHART_DATA, TIMINGS } from '../lib/constants';
 import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
@@ -62,9 +65,14 @@ const CONSUMERS: ConsumerConfig[] = [
 ];
 
 export default function OctopusCharts() {
+  const [showPredictions, setShowPredictions] = useState(false);
   const product = CHART_DATA.DEFAULT_PRODUCT;
   const tariff = CHART_DATA.DEFAULT_TARIFF;
   const { data: apiPoints } = useOctopusPrices(product, tariff);
+  const { data: predictData, isFetching: predictLoading } = useAgilePredict(
+    tariff,
+    showPredictions,
+  );
 
   const nowMs = useNowMs();
   const todayKey = nowMs;
@@ -74,6 +82,14 @@ export default function OctopusCharts() {
     () => buildPointsData(apiPoints, nowMs),
     [apiPoints, nowMs],
   );
+
+  const shownPoints = useMemo(() => {
+    if (showPredictions && predictData) {
+      return mergeChartData(points, predictData);
+    }
+    return points;
+  }, [points, predictData, showPredictions]);
+
   // TODO put this in buildPointsData
   const activeIndex = points.findIndex((p) => p.status === 'active');
 
@@ -104,7 +120,7 @@ export default function OctopusCharts() {
   const consumers = useMemo(
     () =>
       CONSUMERS.map((config) => {
-        const afterNow = points.filter((p) => isAfter(p.startMs, nowMs));
+        const afterNow = shownPoints.filter((p) => isAfter(p.startMs, nowMs));
         const targetLength = Math.ceil(
           milliseconds(config.duration) / millisecondsInHour / 0.5, // half-hourly points
         );
@@ -114,7 +130,7 @@ export default function OctopusCharts() {
           bestStartTimePoints: afterNow.slice(index, index + targetLength),
         };
       }),
-    [nowMs, points],
+    [nowMs, shownPoints],
   );
 
   useResizeChartsOnOrientationChange();
@@ -122,9 +138,16 @@ export default function OctopusCharts() {
   return (
     <>
       <OctopusChartsLayout
+        predictionToggle={
+          <PredictionToggle
+            checked={showPredictions}
+            onChange={setShowPredictions}
+            loading={predictLoading}
+          />
+        }
         barChart={
           <PriceChart
-            points={points}
+            points={shownPoints}
             displayIndex={displayIndex}
             consumerBestTimes={consumers}
             onHover={setHoverIndex}
@@ -132,13 +155,16 @@ export default function OctopusCharts() {
           />
         }
         verticalChart={
-          <VerticalPriceChart points={points} consumerBestTimes={consumers} />
+          <VerticalPriceChart
+            points={shownPoints}
+            consumerBestTimes={consumers}
+          />
         }
         todayAmClock={
           <RateClock
             dateKey={todayKey}
             startHourOfDay={0}
-            points={points}
+            points={shownPoints}
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
@@ -149,7 +175,7 @@ export default function OctopusCharts() {
           <RateClock
             dateKey={todayKey}
             startHourOfDay={12}
-            points={points}
+            points={shownPoints}
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
@@ -160,7 +186,7 @@ export default function OctopusCharts() {
           <RateClock
             dateKey={tomorrowKey}
             startHourOfDay={0}
-            points={points}
+            points={shownPoints}
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
@@ -171,7 +197,7 @@ export default function OctopusCharts() {
           <RateClock
             dateKey={tomorrowKey}
             startHourOfDay={12}
-            points={points}
+            points={shownPoints}
             displayIndex={displayIndex}
             onHover={setHoverIndex}
             setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
@@ -182,7 +208,7 @@ export default function OctopusCharts() {
           <ConsumerList
             relativeNow={nowMs}
             consumers={consumers}
-            points={points}
+            points={shownPoints}
           />
         }
         note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
