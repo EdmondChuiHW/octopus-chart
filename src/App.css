@@ -67,25 +67,6 @@
   color: #04202a; /* dark teal for text */
 }
 
-/* Ensure inner text and hover display use the darker color on light bg */
-.rate-clock.am .hover-display {
-  color: #04202a;
-}
-.rate-clock.am .hover-display .rate {
-  color: #04202a;
-}
-
-/* Make the am/pm circular label visible on light backgrounds */
-.rate-clock.am .am-pm-label .label {
-  color: #04202a;
-}
-
-.rate-clock svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
 /* chart container sizing moved from inline styles in RateClock.tsx */
 .rate-clock .chart-container {
   width: 100%;

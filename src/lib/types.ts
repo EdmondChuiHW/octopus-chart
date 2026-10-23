@@ -1,37 +1,41 @@
 import type { Duration } from 'date-fns';
-import { z } from 'zod';
-import type { PricePoint } from './pointUtils';
+import * as z from 'zod/mini';
 
-export const ApiPricePointSchema = z.object({
-  value_exc_vat: z.number(),
-  value_inc_vat: z.number(),
-  valid_from: z.string().transform((d) => new Date(d)),
-  valid_to: z.string().transform((d) => new Date(d)),
+// zod/mini keeps the response validation but is ~10x smaller than classic zod,
+// which matters because this module is on the critical path (main.tsx prefetch).
+export const OctopusResponseSchema = z.object({
+  results: z.array(
+    z.object({
+      value_inc_vat: z.number(),
+      valid_from: z.string(),
+      valid_to: z.string(),
+    }),
+  ),
 });
 
-export type ApiPricePoint = z.infer<typeof ApiPricePointSchema>;
+export const AgileForecastResponseSchema = z.array(
+  z.object({
+    prices: z.array(
+      z.object({
+        date_time: z.string(),
+        agile_pred: z.number(),
+        agile_low: z.number(),
+        agile_high: z.number(),
+      }),
+    ),
+  }),
+);
 
-export const ResponseSchema = z.object({
-  results: z.array(ApiPricePointSchema),
-});
+/** A published half-hour price (p/kWh inc VAT). Times are epoch ms. */
+export type PriceSlot = { startMs: number; endMs: number; price: number };
 
-export const AgilePredictPriceSchema = z.object({
-  date_time: z.string(),
-  agile_pred: z.number(),
-  agile_low: z.number(),
-  agile_high: z.number(),
-  is_published: z.boolean().optional(),
-});
-
-export type AgilePredictPrice = z.infer<typeof AgilePredictPriceSchema>;
-
-export const AgilePredictForecastSchema = z.object({
-  name: z.string(),
-  created_at: z.string(),
-  prices: z.array(AgilePredictPriceSchema),
-});
-
-export type AgilePredictForecast = z.infer<typeof AgilePredictForecastSchema>;
+/** A forecast half-hour price from agileforecast.co.uk (p/kWh). */
+export type ForecastSlot = {
+  startMs: number;
+  price: number;
+  low: number;
+  high: number;
+};
 
 export type Timer = {
   mode: 'starts-in' | 'ends-in';
@@ -49,7 +53,8 @@ export type ConsumerConfig = {
   timers: Timer[];
 };
 
-export type ConsumerBestTimes = {
+export type ConsumerBestTime = {
   config: ConsumerConfig;
-  bestStartTimePoints: PricePoint[];
+  /** Start ms of the cheapest upcoming run, if there is one. */
+  bestStartMs: number | undefined;
 };

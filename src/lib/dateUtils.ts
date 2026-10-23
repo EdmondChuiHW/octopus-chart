@@ -1,7 +1,4 @@
 import {
-  format,
-  getMinutes,
-  type DateArg,
   type Duration,
   type FormatDistanceFn,
   type FormatDistanceToken,
@@ -12,12 +9,13 @@ import {
 } from 'date-fns';
 import { millisecondsInHour } from 'date-fns/constants';
 
-export function formatTimeLocal(date: DateArg<Date>): string {
-  if (getMinutes(date) === 0) {
-    return format(date, 'haaa');
-  }
-
-  return format(date, 'h:mmaaa');
+/** "3pm" / "3:30pm" in local time. (Hand-rolled: called for every point.) */
+export function formatTimeLocal(date: Date | number): string {
+  const d = typeof date === 'number' ? new Date(date) : date;
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const time = `${h % 12 || 12}${m === 0 ? '' : `:${String(m).padStart(2, '0')}`}`;
+  return `${time}${h < 12 ? 'am' : 'pm'}`;
 }
 
 const formatDistanceLocale: { [K in FormatDistanceToken]?: string } = {

@@ -117,7 +117,6 @@ export default function Consumer({
       )}
       {choices[choiceIndex] && (
         <StartTimeHintChart
-          relativeNow={relativeNow}
           choice={choices[choiceIndex]}
           consumer={config}
           periodPoints={points}

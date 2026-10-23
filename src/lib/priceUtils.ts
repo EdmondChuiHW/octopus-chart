@@ -1,3 +1,6 @@
+import { formatShortDurationHoursMinsOnly } from './dateUtils';
+import type { ConsumerBestTime } from './types';
+
 /**
  * Computes all contiguous window sums of a given length in the points array.
  * @param points Array of data points
@@ -29,15 +32,6 @@ export function computeWindowSums<E>(
   }
   return periods;
 }
-// Example usage of heap-js MinHeap:
-// import { Heap } from 'heap-js';
-// // Min Heap by default
-// const minHeap = new Heap();
-// minHeap.init([5, 18, 1]);
-// minHeap.push(2);
-// console.log(minHeap.peek()); //> 1
-// console.log(minHeap.pop()); //> 1
-// console.log(minHeap.peek()); //> 2
 
 /**
  * Finds the start indices of the n cheapest contiguous periods of a given length.
@@ -96,4 +90,22 @@ export function findLowestPeriod<E>(
   }
 
   return bestStartIndex;
+}
+
+/**
+ * Groups consumers by their best start time, e.g. `startMs -> "1h, 2h25m"`.
+ * Used to mark best times on the charts.
+ */
+export function bestTimeLabels(
+  consumers: readonly ConsumerBestTime[] | undefined,
+): Map<number, string> {
+  const byStart = new Map<number, string[]>();
+  for (const { config, bestStartMs } of consumers ?? []) {
+    if (bestStartMs == null) continue;
+    const label = formatShortDurationHoursMinsOnly(config.duration);
+    const labels = byStart.get(bestStartMs) ?? [];
+    if (!labels.includes(label)) labels.push(label);
+    byStart.set(bestStartMs, labels);
+  }
+  return new Map([...byStart].map(([ms, labels]) => [ms, labels.join(', ')]));
 }

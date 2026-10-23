@@ -1,67 +1,80 @@
-import { type QueryFunctionContext } from '@tanstack/react-query';
-import { z } from 'zod';
-import { ResponseSchema, AgilePredictForecastSchema } from '../lib/types';
-import type { ApiPricePoint, AgilePredictPrice } from '../lib/types';
+import type { QueryFunctionContext } from '@tanstack/react-query';
 import { addDays, sub } from 'date-fns';
 import { CHART_DATA } from './constants';
+import {
+  AgileForecastResponseSchema,
+  OctopusResponseSchema,
+  type ForecastSlot,
+  type PriceSlot,
+} from './types';
 
 export async function fetchOctopusPrices(
   ctx: QueryFunctionContext<[string, string, string]>,
-): Promise<ApiPricePoint[]> {
-  const [, p, t] = ctx.queryKey;
+): Promise<PriceSlot[]> {
+  const [, product, tariff] = ctx.queryKey;
   const now = Date.now();
-  const period_from = sub(
-    now,
-    CHART_DATA.DEFAULT_LOOKBACK_DURATION,
-  ).toISOString();
-  const period_to = addDays(now, 2).toISOString();
+  const params = new URLSearchParams({
+    period_from: sub(now, CHART_DATA.DEFAULT_LOOKBACK_DURATION).toISOString(),
+    period_to: addDays(now, 2).toISOString(),
+    page_size: '1500',
+  });
   const url = `https://api.octopus.energy/v1/products/${encodeURIComponent(
-    p,
+    product,
   )}/electricity-tariffs/${encodeURIComponent(
-    t,
-  )}/standard-unit-rates/?period_from=${encodeURIComponent(
-    period_from,
-  )}&period_to=${encodeURIComponent(period_to)}&page_size=1500`;
+    tariff,
+  )}/standard-unit-rates/?${params}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: ctx.signal });
   if (!res.ok) {
     throw new Error(`API returned ${res.status} ${res.statusText}`);
   }
 
-  const parsed = ResponseSchema.safeParse(await res.json());
+  const parsed = OctopusResponseSchema.safeParse(await res.json());
   if (!parsed.success) {
     throw new Error(`API response validation failed: ${parsed.error.message}`);
   }
-
-  const results = parsed.data.results;
-  if (results.length === 0) {
+  if (parsed.data.results.length === 0) {
     throw new Error(
       'No price data available for the selected tariff / period.',
     );
   }
 
-  results.sort((a, b) => a.valid_from.getTime() - b.valid_from.getTime());
-  return results;
+  return parsed.data.results
+    .map((r) => ({
+      startMs: Date.parse(r.valid_from),
+      endMs: Date.parse(r.valid_to),
+      price: r.value_inc_vat,
+    }))
+    .sort((a, b) => a.startMs - b.startMs);
 }
 
-export async function fetchAgilePredict(
+export async function fetchAgileForecast(
   ctx: QueryFunctionContext<[string, string]>,
-): Promise<AgilePredictPrice[]> {
+): Promise<ForecastSlot[]> {
   const [, tariff] = ctx.queryKey;
   const region = tariff.split('-').pop() ?? '';
   const url = `https://agileforecast.co.uk/api/${encodeURIComponent(region)}?hours=72`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: ctx.signal });
   if (!res.ok) {
-    throw new Error(`Agile Forecast API returned ${res.status} ${res.statusText}`);
+    throw new Error(
+      `Agile Forecast API returned ${res.status} ${res.statusText}`,
+    );
   }
 
-  const prices = z
-    .array(AgilePredictForecastSchema)
-    .safeParse(await res.json());
-  if (!prices.success) {
-    throw new Error(`Agile Forecast response validation failed: ${prices.error.message}`);
+  const parsed = AgileForecastResponseSchema.safeParse(await res.json());
+  if (!parsed.success) {
+    throw new Error(
+      `Agile Forecast response validation failed: ${parsed.error.message}`,
+    );
   }
 
-  return prices.data[0]?.prices ?? [];
+  return (parsed.data[0]?.prices ?? [])
+    .map((p) => ({
+      startMs: Date.parse(p.date_time),
+      price: p.agile_pred,
+      low: p.agile_low,
+      high: p.agile_high,
+    }))
+    .sort((a, b) => a.startMs - b.startMs);
 }

@@ -1,41 +1,28 @@
-import type { ApiPricePoint } from './types';
+import { COLORS, rateToColor } from './colors';
+import { CHART_DATA, MS } from './constants';
 import { formatTimeLocal } from './dateUtils';
-import {
-  getBackgroundColorForPoint,
-  getBorderColorForPoint,
-  getPointStatus,
-} from './colors';
-import { isAfter, sub } from 'date-fns';
-import { CHART_DATA } from './constants';
+import { milliseconds } from 'date-fns';
+import type { ForecastSlot, PriceSlot } from './types';
 
-export type PointStatus = 'active' | 'past' | 'upcoming' | 'no-data';
+export type PointStatus = 'active' | 'past' | 'upcoming';
 
-type PricePointBase = {
-  // x is the start timestamp (ms) used by the timeseries scale
-  x: number;
-  // y is the numeric value (p/kWh inc VAT)
-  y: number;
+/** Everything the charts need for one half-hour, precomputed once. */
+export type PricePoint = {
   startMs: number;
   endMs: number;
-  label: string;
-  endLabel: string;
-  tickLabel: string | undefined;
-  status: PointStatus;
-  backgroundColor: string;
-  borderColor: string | undefined;
-};
-
-export type ConfirmedPoint = PricePointBase & {
-  isConfirmed: true;
-};
-
-export type PredictedPoint = PricePointBase & {
-  isConfirmed: false;
+  /** p/kWh inc VAT; the median for predictions. */
+  price: number;
+  /** Prediction range. Equal to `price` for confirmed points. */
   low: number;
   high: number;
+  isConfirmed: boolean;
+  status: PointStatus;
+  /** Fill colour ('transparent' for predictions, which are drawn as a band). */
+  color: string;
+  /** e.g. "3pm", "3:30pm" */
+  label: string;
+  isOnTheHour: boolean;
 };
-
-export type PricePoint = ConfirmedPoint | PredictedPoint;
 
 export type Period = {
   index: number;
@@ -43,55 +30,75 @@ export type Period = {
 };
 
 /**
- * Pure helper to build the bar chart arrays used by `OctopusChart`.
- * - labels: human readable range per bar
- * - dataPoints: array of per-bar objects containing x/y, label and styling
+ * Builds chart points from published prices (from one lookback window before
+ * `nowMs`), optionally followed by up to a day of forecast prices.
  */
-export function buildPointsData(
-  points: ApiPricePoint[],
+export function buildPoints(
+  slots: readonly PriceSlot[],
   nowMs: number,
-): ConfirmedPoint[] {
-  const dataPoints: ConfirmedPoint[] = [];
+  forecast?: readonly ForecastSlot[],
+): PricePoint[] {
+  const fromMs = nowMs - milliseconds(CHART_DATA.DEFAULT_LOOKBACK_DURATION);
+  const recent = slots.filter((s) => s.startMs > fromMs);
+  if (recent.length === 0) return [];
 
-  if (points.length === 0) {
-    return dataPoints;
+  let min = Infinity;
+  let max = -Infinity;
+  for (const s of recent) {
+    min = Math.min(min, s.price);
+    max = Math.max(max, s.price);
   }
 
-  points = points.filter((p) =>
-    isAfter(p.valid_from, sub(nowMs, CHART_DATA.DEFAULT_LOOKBACK_DURATION)),
-  );
-  const values = points.map((p) => p.value_inc_vat);
-  const min = values.length ? Math.min(...values) : 0;
-  const max = values.length ? Math.max(...values) : 1;
-
-  for (const p of points) {
-    const start = p.valid_from.getTime();
-    const end = p.valid_to.getTime();
-
-    const isOnTheHour = p.valid_from.getMinutes() === 0;
-
-    const v = p.value_inc_vat;
-    const status = getPointStatus(nowMs, start, end, v);
-    const backgroundColor = getBackgroundColorForPoint(status, v, min, max);
-    const borderColor = getBorderColorForPoint(status, v, min, max);
-
-    const startStr = formatTimeLocal(p.valid_from);
-
-    const datum: ConfirmedPoint = {
-      x: start,
-      y: v,
-      startMs: start,
-      endMs: end,
-      label: startStr,
-      endLabel: formatTimeLocal(p.valid_to),
-      tickLabel: isOnTheHour ? startStr : undefined,
-      backgroundColor,
-      borderColor,
-      status,
+  const points: PricePoint[] = recent.map((s) => {
+    const status: PointStatus =
+      nowMs >= s.endMs ? 'past' : nowMs >= s.startMs ? 'active' : 'upcoming';
+    return {
+      ...timeFields(s.startMs, s.endMs),
+      price: s.price,
+      low: s.price,
+      high: s.price,
       isConfirmed: true,
+      status,
+      color:
+        status === 'past'
+          ? COLORS.PRIMARY_BLUE_FADED
+          : rateToColor(s.price, min, max),
     };
-    dataPoints.push(datum);
+  });
+
+  if (forecast?.length) {
+    const lastStartMs = recent[recent.length - 1].startMs;
+    const cutoffMs = lastStartMs + MS.PER_DAY;
+    for (const f of forecast) {
+      if (f.startMs <= lastStartMs || f.startMs > cutoffMs) continue;
+      points.push({
+        ...timeFields(f.startMs, f.startMs + MS.PER_HALF_HOUR),
+        price: f.price,
+        low: f.low,
+        high: f.high,
+        isConfirmed: false,
+        status: 'upcoming',
+        color: 'transparent',
+      });
+    }
   }
 
-  return dataPoints;
+  return points;
+}
+
+function timeFields(startMs: number, endMs: number) {
+  const start = new Date(startMs);
+  return {
+    startMs,
+    endMs,
+    label: formatTimeLocal(start),
+    isOnTheHour: start.getMinutes() === 0,
+  };
+}
+
+/** Text for a point's price, e.g. "12.34p/kWh" or "10.00–14.00p/kWh". */
+export function formatPrice(p: PricePoint, unit = 'p/kWh'): string {
+  return p.isConfirmed
+    ? `${p.price.toFixed(2)}${unit}`
+    : `${p.low.toFixed(2)}–${p.high.toFixed(2)}${unit}`;
 }

@@ -9,21 +9,16 @@
     "lint": "eslint . --fix",
     "preview": "vite preview --host",
     "test": "vitest",
+    "screenshots": "vitest run --config scripts/screenshots/vitest.config.ts",
     "prettier": "prettier --list-different --write .",
     "preinstall": "npx only-allow pnpm",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.17",
-    "chart.js": "^4.5.1",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "chartjs-plugin-annotation": "^3.1.0",
     "date-fns": "^4.1.0",
     "echarts": "^6.1.0",
-    "echarts-for-react": "^3.0.6",
-    "ics": "^3.8.1",
     "react": "^19.2.3",
-    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.3",
     "react-error-boundary": "^6.0.3",
     "zod": "^4.3.5"

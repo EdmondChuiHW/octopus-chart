@@ -1,301 +1,128 @@
-import { Bar } from 'react-chartjs-2';
-import type { ChartOptions, ChartData, ChartDataset, Plugin } from 'chart.js';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
+import EChart from './EChart';
 import {
-  Chart as ChartJS,
-  BarElement,
-  LinearScale,
-  Tooltip,
-  Title,
-  Legend,
-  Filler,
-  CategoryScale,
-  LineController,
-  LineElement,
-  PointElement,
-} from 'chart.js';
-import annotationPlugin, {
-  type AnnotationOptions,
-} from 'chartjs-plugin-annotation';
-import type { PricePoint } from '../lib/pointUtils';
-import type { ConsumerBestTimes } from '../lib/types';
+  BASE_OPTION,
+  type ChartOption,
+  type MarkLineItem,
+} from '../lib/echarts';
+import { predictionSeries, priceCategoryAxes } from '../lib/chartHelpers';
 import { COLORS } from '../lib/colors';
-import { formatShortDurationHoursMinsOnly } from '../lib/dateUtils';
+import { formatPrice, type PricePoint } from '../lib/pointUtils';
+import { bestTimeLabels } from '../lib/priceUtils';
+import type { ConsumerBestTime } from '../lib/types';
 import './VerticalPriceChart.css';
-import { axisTickPluginFactory } from './chartPlugins/axisTickPlugin';
-import { setChartActiveIndex } from '../hooks/useActiveChartIndex';
 
-ChartJS.register(
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Title,
-  Legend,
-  Filler,
-  CategoryScale,
-  LineController,
-  LineElement,
-  PointElement,
-  annotationPlugin,
-);
-
-const BAR_HEIGHT = 44;
-
-const plugins: Plugin[] = [axisTickPluginFactory('y', 4)];
+const ROW_HEIGHT = 44;
+const AXIS_WIDTH = 76; // room for "12pm" labels + ticks
 
 export default function VerticalPriceChart({
   points,
   consumerBestTimes,
 }: {
   points: PricePoint[];
-  consumerBestTimes?: ConsumerBestTimes[];
+  consumerBestTimes?: ConsumerBestTime[];
 }) {
-  const data = useMemo(() => {
-    const datasets: (
-      | ChartDataset<'bar', PricePoint[]>
-      | ChartDataset<'line', (number | null)[]>
-    )[] = [
-      {
-        type: 'bar',
-        label: 'p/kWh (inc VAT)',
-        data: points,
-        backgroundColor: (ctx) => {
-          return points.at(ctx.dataIndex)?.backgroundColor;
-        },
-        borderColor: (ctx) => {
-          return points.at(ctx.dataIndex)?.borderColor ?? 'transparent';
-        },
-        borderWidth: (ctx) => {
-          return points.at(ctx.dataIndex)?.status === 'active' ? 4 : 0;
-        },
-      } as ChartDataset<'bar', PricePoint[]>,
-    ];
-
-    if (points.some((p) => !p.isConfirmed)) {
-      datasets.push(
-        {
-          type: 'line',
-          data: points.map((p) => (!p.isConfirmed ? p.low : null)),
-          borderColor: 'transparent',
-          pointRadius: 0,
-          fill: false,
-          order: 1,
-          animation: false,
-        } as ChartDataset<'line', (number | null)[]>,
-        {
-          type: 'line',
-          data: points.map((p) => (!p.isConfirmed ? p.high : null)),
-          borderColor: 'transparent',
-          backgroundColor: 'rgba(195,155,211,0.4)',
-          pointRadius: 0,
-          fill: '-1',
-          order: 1,
-          animation: false,
-        } as ChartDataset<'line', (number | null)[]>,
-        {
-          type: 'line',
-          label: 'Prediction',
-          data: points.map((p) => (!p.isConfirmed ? p.y : null)),
-          borderColor: COLORS.PREDICTION,
-          pointRadius: 0,
-          fill: false,
-          order: 3,
-          animation: false,
-        } as ChartDataset<'line', (number | null)[]>,
-      );
-    }
-
-    return {
-      labels: points.map((point) => point.label),
-      datasets,
-    } as unknown as ChartData<'bar'>;
-  }, [points]);
-
-  const priceAnnotations = useMemo<AnnotationOptions<'label'>[]>(
-    () =>
-      points.map((point, index) => ({
-        type: 'label',
-        id: `vertical-price-label-${point.x}-${index}`,
-        drawTime: 'afterDraw',
-        adjustScaleRange: false,
-        xMin: 0,
-        xMax: 0,
-        yMin: index,
-        yMax: index,
-        borderRadius: 6,
-        color: '#ffffff',
-        textStrokeColor: 'black',
-        textStrokeWidth: 8,
-        font: {
-          family: 'Inter, system-ui, sans-serif',
-          size: 18,
-          weight: 'bolder',
-        },
-        padding: 0,
-        content: point.isConfirmed
-          ? `${point.y.toFixed(2)}p`
-          : `${point.low.toFixed(2)}–${point.high.toFixed(2)}p`,
-        position: {
-          x: 'start',
-          y: 'center',
-        },
-        xAdjust: 4,
-        display: true,
-      })),
-    [points],
+  const option = useMemo(
+    () => buildOption(points, bestTimeLabels(consumerBestTimes)),
+    [points, consumerBestTimes],
   );
-
-  const consumerBestTimeAnnotations = useMemo<AnnotationOptions[]>(() => {
-    if (!consumerBestTimes?.length) return [];
-
-    const durationLabelByStartMs = new Map<number, Set<string>>();
-    consumerBestTimes.forEach(({ config, bestStartTimePoints }) => {
-      const firstBest = bestStartTimePoints[0];
-      const durationLabel = formatShortDurationHoursMinsOnly(config.duration);
-      const existing = durationLabelByStartMs.get(firstBest.startMs);
-      if (existing) {
-        existing.add(durationLabel);
-      } else {
-        durationLabelByStartMs.set(firstBest.startMs, new Set([durationLabel]));
-      }
-    });
-
-    const annotations: AnnotationOptions[] = [];
-    const allVals = points.map((p) => p.y);
-    const maxVal = Math.max(...allVals);
-
-    points.forEach((point, index) => {
-      const labels = durationLabelByStartMs.get(point.startMs);
-      if (!labels?.size) return;
-
-      const content = [...labels].join(', ');
-
-      annotations.push({
-        type: 'line',
-        id: `vertical-consumer-best-time-${point.x}-${index}`,
-        drawTime: 'afterDraw',
-        adjustScaleRange: false,
-        xMax: maxVal,
-        yMin: index - 0.5,
-        yMax: index - 0.5,
-        borderColor: COLORS.PRIMARY_BLUE,
-        borderWidth: 4,
-        display: true,
-        z: -1,
-      } as AnnotationOptions<'line'>);
-
-      annotations.push({
-        type: 'label',
-        id: `vertical-consumer-best-time-${point.x}-${index}`,
-        drawTime: 'afterDraw',
-        adjustScaleRange: false,
-        xValue: maxVal,
-        yValue: index - 0.5,
-        display: true,
-        borderRadius: {
-          topLeft: 0,
-          topRight: 0,
-          bottomLeft: 8,
-          bottomRight: 8,
-        },
-        content,
-        color: '#ffffff',
-        backgroundColor: COLORS.PRIMARY_BLUE,
-        borderColor: 'transparent',
-        borderWidth: 0,
-        font: {
-          size: 20,
-          weight: 'bold',
-        },
-        padding: {
-          x: 8,
-          top: 0,
-          bottom: 4,
-        },
-        position: {
-          x: 'end',
-          y: 'start',
-        },
-        z: -1,
-      } as AnnotationOptions<'label'>);
-    });
-
-    return annotations;
-  }, [consumerBestTimes, points]);
-
-  const annotations = useMemo<AnnotationOptions[]>(
-    () => [...priceAnnotations, ...consumerBestTimeAnnotations],
-    [priceAnnotations, consumerBestTimeAnnotations],
-  );
-
-  const options = useMemo<ChartOptions<'bar'>>(() => {
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      events: [],
-      hover: {},
-      parsing: {
-        xAxisKey: 'y',
-        yAxisKey: 'x',
-      },
-      layout: {
-        padding: 0,
-      },
-      borderRadius: BAR_HEIGHT / 2,
-      barPercentage: 0.95,
-      categoryPercentage: 0.95,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-        title: { display: false },
-        annotation: {
-          animations: {
-            numbers: {
-              properties: [],
-              type: 'number',
-            },
-          },
-          annotations,
-        },
-      },
-      scales: {
-        x: {
-          display: false,
-        },
-        y: {
-          type: 'category',
-          ticks: {
-            color: '#ffffff',
-            font: { size: 20, weight: 'bold' },
-            callback(value) {
-              const index = Number(value);
-              const point = points.at(index);
-              return point?.tickLabel;
-            },
-            align: 'end',
-            labelOffset: -10,
-            includeBounds: true,
-            padding: 8,
-          },
-          grid: { display: false },
-        },
-      },
-    };
-  }, [annotations, points]);
-  const chartHeight = points.length * BAR_HEIGHT;
-
-  const chartRef = useRef(null);
-  useEffect(() => {
-    const activeIndex = points.findIndex((p) => p.status === 'active');
-    setChartActiveIndex(chartRef.current, activeIndex);
-  }, [points]);
 
   return (
     <div className="vertical-price-chart-container">
-      <div style={{ position: 'relative', height: chartHeight }}>
-        <Bar options={options} data={data} plugins={plugins} ref={chartRef} />
-      </div>
+      <EChart option={option} style={{ height: points.length * ROW_HEIGHT }} />
     </div>
   );
+}
+
+function buildOption(
+  points: PricePoint[],
+  bestLabels: Map<number, string>,
+): ChartOption {
+  // Line along the top edge of each best-start row, with a tab hanging below
+  // it on the right. Rows are exactly ROW_HEIGHT px, so position in pixels.
+  const bestLines = points.flatMap((p, i): MarkLineItem[] => {
+    const text = bestLabels.get(p.startMs);
+    if (!text) return [];
+    const y = i * ROW_HEIGHT + 2;
+    return [
+      [
+        { x: AXIS_WIDTH, y },
+        { x: '100%', y, label: { formatter: text } },
+      ],
+    ];
+  });
+
+  return {
+    ...BASE_OPTION,
+    grid: {
+      left: AXIS_WIDTH,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      outerBoundsMode: 'none',
+    },
+    xAxis: {
+      type: 'value',
+      show: false,
+      min: Math.min(0, ...points.map((p) => p.low)),
+      max: Math.max(...points.map((p) => p.high)),
+    },
+    yAxis: priceCategoryAxes(
+      points,
+      {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: 'bold',
+        verticalAlign: 'bottom',
+        margin: 12,
+      },
+      { position: 'left', inverse: true },
+    ),
+    series: [
+      {
+        id: 'price',
+        type: 'bar',
+        barCategoryGap: '10%',
+        silent: true,
+        data: points.map((p) => ({
+          value: p.isConfirmed ? p.price : p.high,
+          itemStyle: {
+            color: p.color,
+            borderRadius: ROW_HEIGHT / 2,
+            borderColor: COLORS.PRIMARY_BLUE,
+            borderWidth: p.status === 'active' ? 4 : 0,
+          },
+        })),
+        label: {
+          show: true,
+          position: 'insideLeft',
+          distance: 8,
+          formatter: ({ dataIndex }: { dataIndex: number }) =>
+            formatPrice(points[dataIndex], 'p'),
+          color: '#fff',
+          fontSize: 18,
+          fontWeight: 'bolder',
+          textBorderColor: 'black',
+          textBorderWidth: 4,
+        },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          lineStyle: { color: COLORS.PRIMARY_BLUE, width: 4, type: 'solid' },
+          label: {
+            position: 'insideEndBottom',
+            distance: 0,
+            color: '#fff',
+            backgroundColor: COLORS.PRIMARY_BLUE,
+            padding: [0, 8, 4, 8],
+            borderRadius: [0, 0, 8, 8],
+            fontSize: 20,
+            fontWeight: 'bold',
+          },
+          data: bestLines,
+        },
+      },
+      ...predictionSeries(points),
+    ],
+  } satisfies ChartOption;
 }

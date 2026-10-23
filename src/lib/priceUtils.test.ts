@@ -26,7 +26,7 @@ describe('findTopNCheapestPeriods', () => {
     const result = findTopNCheapestPeriods(arr, (x) => x, 2, 2);
     // All 2-length windows: [5+2=7, 2+1=3, 1+4=5, 4+3=7]
     // Sorted: [{1,3}, {2,5}]
-        expect(result).toEqual([1, 2]);
+    expect(result).toEqual([1, 2]);
   });
 
   it('returns empty for n=0 or too short', () => {

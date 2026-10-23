@@ -4,7 +4,6 @@ export default function OctopusChartsPlaceholder() {
   return (
     <>
       <OctopusChartsLayout
-        hoverInfo={null}
         barChart={null}
         verticalChart={null}
         todayAmClock={<div className="chart-container"></div>}

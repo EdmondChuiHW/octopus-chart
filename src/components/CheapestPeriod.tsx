@@ -21,7 +21,7 @@ export default function CheapestPeriod({ points, period }: Props) {
       period.index + period.length,
     );
     const avg =
-      periodPoints.reduce((sum, p) => sum + p.y, 0) / periodPoints.length;
+      periodPoints.reduce((sum, p) => sum + p.price, 0) / periodPoints.length;
     return [periodPoints, avg];
   }, [period, points]);
 

@@ -1,4 +1,3 @@
-import type { DateArg } from 'date-fns';
 import { formatISO } from 'date-fns';
 import { useMemo } from 'react';
 import {
@@ -18,82 +17,62 @@ type BaseProps = {
 export type Props = BaseProps &
   (
     | { type: 'choice'; time?: undefined; choice: TimerChoice }
-    | { type: 'manual'; time: DateArg<Date>; choice?: undefined }
+    | { type: 'manual'; time: Date | number; choice?: undefined }
   );
 
 const IS_IOS =
   typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-export function RemindButton(props: Props) {
-  const { type, time, choice, isIos = IS_IOS } = props;
-
-  const { uri, fileName } = useMemo(
-    () => makeUri(props, isIos),
-    [props, isIos],
-  );
-
-  const displayTime = useMemo(() => {
-    switch (type) {
-      case 'choice':
-        return formatTimeLocal(choice.setTime);
-      case 'manual':
-        return formatTimeLocal(time);
-      default:
-        throw new Error(`Unsupported type: ${type satisfies never}`);
+export function RemindButton({
+  applianceName,
+  choice,
+  time,
+  isIos = IS_IOS,
+}: Props) {
+  const remindAt = choice ? choice.setTime : time;
+  const { uri, fileName } = useMemo(() => {
+    const { summary, description } = describe(applianceName, choice, remindAt);
+    const deepLinkUrl = window.location.href;
+    if (isIos) {
+      return {
+        uri: makeIosShortcutUri(remindAt, summary, deepLinkUrl),
+        fileName: undefined,
+      };
     }
-  }, [choice?.setTime, time, type]);
+    return {
+      uri: generateICSUri(remindAt, deepLinkUrl, summary, description),
+      fileName: `${applianceName.replace(/[^a-zA-Z0-9]/g, '_')}_Reminder.ics`,
+    };
+  }, [applianceName, choice, remindAt, isIos]);
 
   return (
-    <>
-      <a href={uri} download={fileName} className="btn remind-me-btn">
-        Remind me at {displayTime}
-      </a>
-    </>
+    <a href={uri} download={fileName} className="btn remind-me-btn">
+      Remind me at {formatTimeLocal(remindAt)}
+    </a>
   );
 }
 
-function makeSummaryAndDescription(props: Props) {
-  const { type, time, choice, applianceName } = props;
-  switch (type) {
-    case 'choice': {
-      const modeStr = choice.timer.mode === 'starts-in' ? 'start' : 'end';
-      const durationStr = formatShortDurationHoursMinsOnly(
-        choice.timer.duration,
-      );
-      return {
-        summary: `Set ${applianceName} to ${modeStr} in ${durationStr}`,
-        description: `Time to set your ${applianceName} to ${modeStr} in ${durationStr}.`,
-      };
-    }
-    case 'manual':
-      return {
-        summary: `Start ${applianceName} at ${formatTimeLocal(time)}`,
-        description: `Time to start your ${applianceName}.`,
-      };
-    default:
-      throw new Error(`Unsupported type: ${type satisfies never}`);
-  }
-}
-
-function makeUri(props: Props, isIos: boolean) {
-  const { summary, description } = makeSummaryAndDescription(props);
-  const startMs = getIcsStartMs(props);
-  const deepLinkUrl = window.location.href;
-  if (isIos) {
+function describe(
+  applianceName: string,
+  choice: TimerChoice | undefined,
+  time: Date | number,
+) {
+  if (!choice) {
     return {
-      uri: makeIosShortcutUri(startMs, summary, deepLinkUrl),
-      fileName: undefined,
-    };
-  } else {
-    return {
-      uri: generateICSUri(startMs, deepLinkUrl, summary, description),
-      fileName: `${props.applianceName.replace(/[^a-zA-Z0-9]/g, '_')}_Reminder.ics`,
+      summary: `Start ${applianceName} at ${formatTimeLocal(time)}`,
+      description: `Time to start your ${applianceName}.`,
     };
   }
+  const modeStr = choice.timer.mode === 'starts-in' ? 'start' : 'end';
+  const durationStr = formatShortDurationHoursMinsOnly(choice.timer.duration);
+  return {
+    summary: `Set ${applianceName} to ${modeStr} in ${durationStr}`,
+    description: `Time to set your ${applianceName} to ${modeStr} in ${durationStr}.`,
+  };
 }
 
 function makeIosShortcutUri(
-  startTime: DateArg<Date>,
+  startTime: Date | number,
   summary: string,
   deepLinkUrl: string,
 ) {
@@ -103,16 +82,4 @@ function makeIosShortcutUri(
   return `shortcuts://run-shortcut?name=${encodeURIComponent(
     shortcutName,
   )}&input=text&text=${encodeURIComponent(payload)}`;
-}
-
-function getIcsStartMs(props: Props): DateArg<Date> {
-  const { type } = props;
-  switch (type) {
-    case 'choice':
-      return props.choice.setTime;
-    case 'manual':
-      return props.time;
-    default:
-      throw new Error(`Unsupported type: ${type satisfies never}`);
-  }
 }

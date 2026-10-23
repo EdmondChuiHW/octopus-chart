@@ -1,13 +1,13 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import type { ApiPricePoint } from '../lib/types';
-import { fetchOctopusPrices } from '../lib/queries';
 import { minutesToMilliseconds } from 'date-fns';
+import { fetchOctopusPrices } from '../lib/queries';
+import type { PriceSlot } from '../lib/types';
 
 export function useOctopusPrices(product: string, tariff: string) {
   const result = useSuspenseQuery<
-    ApiPricePoint[],
+    PriceSlot[],
     Error,
-    ApiPricePoint[],
+    PriceSlot[],
     [string, string, string]
   >({
     queryKey: ['prices', product, tariff],

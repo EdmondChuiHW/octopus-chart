@@ -12,7 +12,7 @@ export default function useBestPeriods(
 
     const indexes = findTopNCheapestPeriods(
       points,
-      (p) => p.y,
+      (p) => p.price,
       targetLength,
       topN,
     );

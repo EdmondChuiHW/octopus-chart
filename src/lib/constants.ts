@@ -17,21 +17,3 @@ export const MS = {
 export const TIMINGS = {
   NOW_UPDATE_INTERVAL: 30_000,
 } as const;
-
-export const NUM = {
-  HOURS_PER_DAY: 24,
-  HOURS_ON_CLOCK: 12,
-  HALF_HOUR_STEPS_PER_12H: 24, // used by existing logic (24 half-hour steps -> 12 hours)
-} as const;
-
-export const CLOCK_LAYOUT = {
-  SCALE_FALLBACK_PADDING: 12,
-  R_TICK_OUTER_DELTA: 2,
-  R_TICK_HOUR_MIN: 12,
-  R_TICK_HOUR_RATIO: 0.12,
-  R_TICK_HALF_MIN: 8,
-  R_TICK_HALF_RATIO: 0.08,
-  R_LABEL_MIN: 24,
-  R_LABEL_RATIO: 0.22,
-  HOUR_FONT_RATIO: 0.16,
-} as const;

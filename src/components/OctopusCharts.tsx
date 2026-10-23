@@ -1,225 +1,138 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { milliseconds } from 'date-fns';
 import { useOctopusPrices } from '../hooks/useOctopusPrices';
 import { useAgilePredict } from '../hooks/useAgilePredict';
 import PriceChart from './PriceChart';
 import VerticalPriceChart from './VerticalPriceChart';
 import RateClock from './RateClock';
 import PredictionToggle from './PredictionToggle';
-import { buildPointsData } from '../lib/pointUtils';
-import { mergeChartData } from '../lib/predictionUtils';
-import { CHART_DATA, TIMINGS } from '../lib/constants';
-import { addDays, isAfter, milliseconds } from 'date-fns';
 import OctopusChartsLayout from './OctopusChartsLayout';
 import ConsumerList from './ConsumerList';
-import type { ConsumerConfig } from '../lib/types';
+import { buildPoints } from '../lib/pointUtils';
+import { CHART_DATA, MS, TIMINGS } from '../lib/constants';
 import { findLowestPeriod } from '../lib/priceUtils';
-import { millisecondsInHour } from 'date-fns/constants';
-import useResizeChartsOnOrientationChange from '../hooks/useResizeChartsOnOrientationChange';
+import type { ConsumerBestTime, ConsumerConfig } from '../lib/types';
 
 const CONSUMERS: ConsumerConfig[] = [
   {
     name: 'Washer [Power Wash 60]',
     duration: { hours: 1, minutes: 0 },
-    timers: [
-      { mode: 'ends-in', duration: { hours: 2 } },
-      { mode: 'ends-in', duration: { hours: 3 } },
-      { mode: 'ends-in', duration: { hours: 4 } },
-      { mode: 'ends-in', duration: { hours: 5 } },
-      { mode: 'ends-in', duration: { hours: 6 } },
-      { mode: 'ends-in', duration: { hours: 7 } },
-      { mode: 'ends-in', duration: { hours: 8 } },
-      { mode: 'ends-in', duration: { hours: 9 } },
-      { mode: 'ends-in', duration: { hours: 10 } },
-      { mode: 'ends-in', duration: { hours: 11 } },
-      { mode: 'ends-in', duration: { hours: 12 } },
-    ],
+    timers: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((hours) => ({
+      mode: 'ends-in',
+      duration: { hours },
+    })),
   },
   {
     name: 'Washer [Cotton Eco]',
     duration: { hours: 2, minutes: 25 },
-    timers: [
-      { mode: 'ends-in', duration: { hours: 3 } },
-      { mode: 'ends-in', duration: { hours: 4 } },
-      { mode: 'ends-in', duration: { hours: 5 } },
-      { mode: 'ends-in', duration: { hours: 6 } },
-      { mode: 'ends-in', duration: { hours: 7 } },
-      { mode: 'ends-in', duration: { hours: 8 } },
-      { mode: 'ends-in', duration: { hours: 9 } },
-      { mode: 'ends-in', duration: { hours: 10 } },
-      { mode: 'ends-in', duration: { hours: 11 } },
-      { mode: 'ends-in', duration: { hours: 12 } },
-    ],
+    timers: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((hours) => ({
+      mode: 'ends-in',
+      duration: { hours },
+    })),
   },
   {
     name: 'Dishwasher',
     duration: { hours: 3 },
     timers: [
-      { mode: 'starts-in', duration: { hours: 3 } },
-      { mode: 'starts-in', duration: { hours: 3, minutes: 30 } },
-      { mode: 'starts-in', duration: { hours: 6 } },
-      { mode: 'starts-in', duration: { hours: 6, minutes: 30 } },
-      { mode: 'starts-in', duration: { hours: 9 } },
-      { mode: 'starts-in', duration: { hours: 9, minutes: 30 } },
-    ],
+      { hours: 3 },
+      { hours: 3, minutes: 30 },
+      { hours: 6 },
+      { hours: 6, minutes: 30 },
+      { hours: 9 },
+      { hours: 9, minutes: 30 },
+    ].map((duration) => ({ mode: 'starts-in', duration })),
   },
 ];
 
 export default function OctopusCharts() {
   const [showPredictions, setShowPredictions] = useState(false);
-  const product = CHART_DATA.DEFAULT_PRODUCT;
-  const tariff = CHART_DATA.DEFAULT_TARIFF;
-  const { data: apiPoints } = useOctopusPrices(product, tariff);
-  const { data: predictData, isFetching: predictLoading } = useAgilePredict(
-    tariff,
+  const { data: prices } = useOctopusPrices(
+    CHART_DATA.DEFAULT_PRODUCT,
+    CHART_DATA.DEFAULT_TARIFF,
+  );
+  const { data: forecast, isFetching: predictLoading } = useAgilePredict(
+    CHART_DATA.DEFAULT_TARIFF,
     showPredictions,
   );
 
   const nowMs = useNowMs();
-  const todayKey = nowMs;
-  const tomorrowKey = addDays(nowMs, 1).getTime();
-
   const points = useMemo(
-    () => buildPointsData(apiPoints, nowMs),
-    [apiPoints, nowMs],
+    () => buildPoints(prices, nowMs, showPredictions ? forecast : undefined),
+    [prices, nowMs, showPredictions, forecast],
   );
+  const currentIndex = points.findIndex((p) => p.status === 'active');
 
-  const shownPoints = useMemo(() => {
-    if (showPredictions && predictData) {
-      return mergeChartData(points, predictData);
-    }
-    return points;
-  }, [points, predictData, showPredictions]);
+  // Hovering any chart highlights that half-hour on all of them; when the
+  // pointer leaves, fall back to the current half-hour after a short delay.
+  const [isHovering, setHovering] = useState(false);
+  const [hoverIndex, setHoverIndex] = useState(-1);
+  const restingIndex = useDelayedIndex(currentIndex, isHovering);
+  const displayIndex =
+    isHovering && hoverIndex >= 0 ? hoverIndex : restingIndex;
 
-  // TODO put this in buildPointsData
-  const activeIndex = points.findIndex((p) => p.status === 'active');
+  const consumers = useMemo<ConsumerBestTime[]>(() => {
+    const upcoming = points.filter((p) => p.startMs > nowMs);
+    return CONSUMERS.map((config) => {
+      const length = Math.ceil(
+        milliseconds(config.duration) / MS.PER_HALF_HOUR,
+      );
+      const index = findLowestPeriod(upcoming, (p) => p.price, length);
+      return { config, bestStartMs: upcoming.at(Math.max(index, 0))?.startMs };
+    });
+  }, [nowMs, points]);
 
-  // TODO check multi-touch behaviour
-  const [hoverSource, setHoverSource] = useState<
-    | 'today-am'
-    | 'today-pm'
-    | 'tomorrow-am'
-    | 'tomorrow-pm'
-    | 'chart'
-    | undefined
-  >();
-  const [rawHoverIndex, setHoverIndex] = useState<number>(-1);
-  const hoverIndex = hoverSource != null ? rawHoverIndex : -1;
-  const delayedActiveIndex = useDelayedActiveIndex(
-    activeIndex,
-    hoverSource != null,
+  const tomorrowMs = nowMs + MS.PER_DAY;
+  const clock = (dateKey: number, startHourOfDay: 0 | 12) => (
+    <RateClock
+      dateKey={dateKey}
+      startHourOfDay={startHourOfDay}
+      points={points}
+      displayIndex={displayIndex}
+      onHover={setHoverIndex}
+      setHovering={setHovering}
+      consumerBestTimes={consumers}
+    />
   );
-
-  const displayIndex = useMemo(
-    () =>
-      hoverIndex > 0
-        ? ([hoverIndex, 'none'] as const)
-        : ([delayedActiveIndex, 'default'] as const),
-    [hoverIndex, delayedActiveIndex],
-  );
-
-  const consumers = useMemo(
-    () =>
-      CONSUMERS.map((config) => {
-        const afterNow = shownPoints.filter((p) => isAfter(p.startMs, nowMs));
-        const targetLength = Math.ceil(
-          milliseconds(config.duration) / millisecondsInHour / 0.5, // half-hourly points
-        );
-        const index = findLowestPeriod(afterNow, (p) => p.y, targetLength);
-        return {
-          config,
-          bestStartTimePoints: afterNow.slice(index, index + targetLength),
-        };
-      }),
-    [nowMs, shownPoints],
-  );
-
-  useResizeChartsOnOrientationChange();
 
   return (
-    <>
-      <OctopusChartsLayout
-        predictionToggle={
-          <PredictionToggle
-            checked={showPredictions}
-            onChange={setShowPredictions}
-            loading={predictLoading}
-          />
-        }
-        barChart={
-          <PriceChart
-            points={shownPoints}
-            displayIndex={displayIndex}
-            consumerBestTimes={consumers}
-            onHover={setHoverIndex}
-            setHovering={(h) => setHoverSource(h ? 'chart' : undefined)}
-          />
-        }
-        verticalChart={
-          <VerticalPriceChart
-            points={shownPoints}
-            consumerBestTimes={consumers}
-          />
-        }
-        todayAmClock={
-          <RateClock
-            dateKey={todayKey}
-            startHourOfDay={0}
-            points={shownPoints}
-            displayIndex={displayIndex}
-            onHover={setHoverIndex}
-            setHovering={(h) => setHoverSource(h ? 'today-am' : undefined)}
-            consumerBestTimes={consumers}
-          />
-        }
-        todayPmClock={
-          <RateClock
-            dateKey={todayKey}
-            startHourOfDay={12}
-            points={shownPoints}
-            displayIndex={displayIndex}
-            onHover={setHoverIndex}
-            setHovering={(h) => setHoverSource(h ? 'today-pm' : undefined)}
-            consumerBestTimes={consumers}
-          />
-        }
-        tomorrowAmClock={
-          <RateClock
-            dateKey={tomorrowKey}
-            startHourOfDay={0}
-            points={shownPoints}
-            displayIndex={displayIndex}
-            onHover={setHoverIndex}
-            setHovering={(h) => setHoverSource(h ? 'tomorrow-am' : undefined)}
-            consumerBestTimes={consumers}
-          />
-        }
-        tomorrowPmClock={
-          <RateClock
-            dateKey={tomorrowKey}
-            startHourOfDay={12}
-            points={shownPoints}
-            displayIndex={displayIndex}
-            onHover={setHoverIndex}
-            setHovering={(h) => setHoverSource(h ? 'tomorrow-pm' : undefined)}
-            consumerBestTimes={consumers}
-          />
-        }
-        bestPeriods={
-          <ConsumerList
-            relativeNow={nowMs}
-            consumers={consumers}
-            points={shownPoints}
-          />
-        }
-        note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
-        hoverInfo={null}
-      />
-    </>
+    <OctopusChartsLayout
+      predictionToggle={
+        <PredictionToggle
+          checked={showPredictions}
+          onChange={setShowPredictions}
+          loading={predictLoading}
+        />
+      }
+      barChart={
+        <PriceChart
+          points={points}
+          activeIndex={displayIndex}
+          consumerBestTimes={consumers}
+          onHover={setHoverIndex}
+          setHovering={setHovering}
+        />
+      }
+      verticalChart={
+        <VerticalPriceChart points={points} consumerBestTimes={consumers} />
+      }
+      todayAmClock={clock(nowMs, 0)}
+      todayPmClock={clock(nowMs, 12)}
+      tomorrowAmClock={clock(tomorrowMs, 0)}
+      tomorrowPmClock={clock(tomorrowMs, 12)}
+      bestPeriods={
+        <ConsumerList
+          relativeNow={nowMs}
+          consumers={CONSUMERS}
+          points={points}
+        />
+      }
+      note="Tip: slide or hover across bars to see the half-hour range and price. Tomorrow's prices may become available after 4–8 PM local time."
+    />
   );
 }
 
 function useNowMs(): number {
-  const [nowMs, setNowMs] = useState<number>(Date.now());
+  const [nowMs, setNowMs] = useState(Date.now);
   useEffect(() => {
     const id = setInterval(
       () => setNowMs(Date.now()),
@@ -227,33 +140,19 @@ function useNowMs(): number {
     );
     return () => clearInterval(id);
   }, []);
-
   return nowMs;
 }
 
-function useDelayedActiveIndex(
-  activeIndex: number,
-  isHovering: boolean,
-): number {
-  const [delayedActiveIndex, setDelayedActiveIndex] =
-    useState<number>(activeIndex);
-  const resetActiveIndexTimerRef = useRef<number>(0);
-
+/** `index`, but -1 while hovering and only restored 500ms after hovering ends. */
+function useDelayedIndex(index: number, isHovering: boolean): number {
+  const [delayed, setDelayed] = useState(index);
   useEffect(() => {
     if (isHovering) {
-      setDelayedActiveIndex(-1);
+      setDelayed(-1);
       return;
     }
-
-    resetActiveIndexTimerRef.current = setTimeout(() => {
-      setDelayedActiveIndex(activeIndex);
-    }, 500);
-
-    return () => {
-      clearTimeout(resetActiveIndexTimerRef.current);
-      resetActiveIndexTimerRef.current = 0;
-    };
-  }, [activeIndex, isHovering]);
-
-  return delayedActiveIndex;
+    const id = setTimeout(() => setDelayed(index), 500);
+    return () => clearTimeout(id);
+  }, [index, isHovering]);
+  return delayed;
 }
